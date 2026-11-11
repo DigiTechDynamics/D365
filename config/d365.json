@@ -1,0 +1,83 @@
+{
+  "_comment": "mode: 'off' (local JSON only), 'mock' (built-in fake D365 for demos), 'live' (your D365 F&O sandbox). Live needs D365_TENANT_ID, D365_CLIENT_ID, D365_CLIENT_SECRET in the environment. Entity and field names below are the integration contract: run scripts/check_d365.py against your sandbox to confirm each one, and change them here if your environment differs. Entries marked verify=true are the ones most likely to need adjusting.",
+  "mode": "mock",
+  "environment_url": "https://your-sandbox.sandbox.operations.dynamics.com",
+  "legal_entity": "USMF",
+  "approvals": "agent",
+  "_approvals_comment": "'agent' = the agent's own approval routing and chasing. 'd365_workflow' = after AP review in the agent, invoices go straight to D365, where the vendor invoice workflow handles approvals.",
+  "invoice_journal_name": "APInvoice",
+  "account_structure_segments": ["main_account", "BusinessUnit", "CostCenter", "Department"],
+  "payment_terms_days": {"Net10": 10, "Net15": 15, "Net30": 30, "Net45": 45, "Net60": 60},
+
+  "read": {
+    "vendors": {
+      "entity": "VendorsV2",
+      "fields": {"account": "VendorAccountNumber", "name": "VendorOrganizationName", "tax_id": "TaxExemptNumber",
+                 "currency": "CurrencyCode", "on_hold": "OnHoldStatus", "payment_terms": "PaymentTermsName",
+                 "tax_group": "SalesTaxGroupCode"}
+    },
+    "po_headers": {
+      "entity": "PurchaseOrderHeadersV2",
+      "fields": {"po": "PurchaseOrderNumber", "vendor": "OrderVendorAccountNumber", "status": "PurchaseOrderStatus",
+                 "currency": "CurrencyCode", "buyer_personnel": "OrdererPersonnelNumber"}
+    },
+    "po_lines": {
+      "entity": "PurchaseOrderLinesV2",
+      "verify": true,
+      "fields": {"po": "PurchaseOrderNumber", "line": "LineNumber", "item": "ItemNumber", "description": "LineDescription",
+                 "qty": "OrderedPurchaseQuantity", "received_qty": "ReceivedPurchaseQuantity", "unit_price": "PurchasePrice",
+                 "category": "ProcurementProductCategoryName", "CostCenter": "CostCenter", "Department": "Department",
+                 "BusinessUnit": "BusinessUnit"}
+    },
+    "posted_invoices": {
+      "entity": "VendorInvoiceJournalHeaders",
+      "verify": true,
+      "_comment": "Posted vendor invoices, used for duplicate checks and vendor coding history.",
+      "fields": {"vendor": "InvoiceAccount", "invoice_number": "InvoiceId", "date": "InvoiceDate", "total": "InvoiceAmount",
+                 "voucher": "LedgerVoucher", "main_account": "MainAccount", "CostCenter": "CostCenter", "Project": "ProjectId"}
+    },
+    "projects": {
+      "entity": "Projects",
+      "fields": {"id": "ProjectID", "name": "ProjectName", "status": "ProjectStage", "manager_personnel": "ProjectManagerPersonnelNumber",
+                 "CostCenter": "CostCenter", "Department": "Department", "BusinessUnit": "BusinessUnit"},
+      "status_values": {"InProcess": "in_process", "Finished": "finished", "Created": "created"}
+    }
+  },
+
+  "write": {
+    "pending_invoice_header": {
+      "entity": "VendorInvoiceHeaders",
+      "fields": {"legal_entity": "dataAreaId", "reference": "HeaderReference", "vendor": "InvoiceAccount",
+                 "invoice_number": "InvoiceNumber", "invoice_date": "InvoiceDate", "due_date": "DueDate",
+                 "currency": "Currency", "po": "PurchaseOrderNumber", "description": "InvoiceDescription"}
+    },
+    "pending_invoice_line": {
+      "entity": "VendorInvoiceLines",
+      "verify": true,
+      "fields": {"legal_entity": "dataAreaId", "reference": "HeaderReference", "line": "InvoiceLineNumber",
+                 "po": "PurchaseOrderNumber", "po_line": "PurchaseOrderLineNumber", "item": "ItemNumber",
+                 "qty": "ReceiveNow", "unit_price": "UnitPrice", "amount": "LineAmount"}
+    },
+    "journal_header": {
+      "entity": "VendorInvoiceJournalHeaders",
+      "key": "JournalBatchNumber",
+      "fields": {"legal_entity": "dataAreaId", "journal_name": "JournalName", "description": "Description"}
+    },
+    "journal_line": {
+      "entity": "VendorInvoiceJournalLines",
+      "verify": true,
+      "fields": {"legal_entity": "dataAreaId", "batch": "JournalBatchNumber", "line": "LineNumber",
+                 "vendor": "AccountDisplayValue", "invoice_number": "InvoiceId", "invoice_date": "InvoiceDate",
+                 "due_date": "DueDate", "credit": "CreditAmount", "currency": "CurrencyCode", "text": "Text",
+                 "offset_type": "OffsetAccountType", "offset_account": "OffsetAccountDisplayValue",
+                 "project_category": "ProjectCategory", "tax_group": "SalesTaxGroup", "item_tax_group": "ItemSalesTaxGroup"}
+    },
+    "attachment": {
+      "entity": "DocumentAttachments",
+      "verify": true,
+      "_comment": "Attachment entities differ between versions and setups. Confirm the entity that attaches files and notes to pending vendor invoices / journal headers in your environment.",
+      "fields": {"legal_entity": "dataAreaId", "table": "TableName", "record": "RecordReference", "type": "TypeId",
+                 "name": "Name", "file_name": "FileName", "content": "FileContents", "notes": "Notes"}
+    }
+  }
+}

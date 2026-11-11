@@ -30,7 +30,11 @@
     <div><b>Approved.</b> Ready to transfer to D365 as {{ 'a pending vendor invoice' if c.invoice_type == 'po' else 'an invoice journal' }}.</div>
     <form method="post" action="{{ url_for('transfer', cid=c.id) }}" style="margin-left:auto"><button class="btn primary" {{ 'disabled' if me.role != 'APSpecialist' }}>Transfer to D365</button></form>
   {% elif c.status == 'transferred' %}
+    {% if c.transfer.d365 %}
+    <div><b>In D365 ({{ c.transfer.d365_mode }}):</b> {{ c.transfer.d365.type }} <b>{{ c.transfer.d365.reference }}</b> &middot; created by {{ c.transfer.by }} &middot; PDF and agent findings attached &middot; <a href="{{ url_for('d365_page') }}">view</a></div>
+    {% else %}
     <div><b>Transferred</b> as {{ c.transfer.target }} by {{ c.transfer.by }} &middot; payload <code>outbox/{{ c.transfer.file }}</code> &middot; invoice image attached to the header ({{ c.sha256[:12] }}&hellip;)</div>
+    {% endif %}
   {% elif c.status == 'blocked' %}
     <div style="color:var(--bad)"><b>Blocked:</b> {% for ch in c.checks if ch.blocking and ch.status == 'fail' %}{{ ch.detail }}{% endfor %}</div>
     <form method="post" action="{{ url_for('decide', cid=c.id) }}" style="margin-left:auto"><input type="hidden" name="comment" value="Rejected: blocked by validation">

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block body %}
+<h1 style="margin-bottom:6px">Dynamics 365 F&amp;O connection</h1>
+<p class="muted" style="margin-top:0">Settings in <code>config/d365.json</code>. Master data is currently read from: <b>{{ source }}</b>.</p>
+<div class="kpis">
+  <div class="card kpi"><div class="k">Mode</div><div class="n" style="font-size:20px">{{ cfg.mode }}</div><div class="small muted">{{ 'built-in mock - no sandbox needed' if cfg.mode == 'mock' else (cfg.environment_url if cfg.mode == 'live' else 'D365 not used') }}</div></div>
+  <div class="card kpi"><div class="k">Legal entity</div><div class="n" style="font-size:20px">{{ cfg.legal_entity }}</div></div>
+  <div class="card kpi"><div class="k">Approvals</div><div class="n" style="font-size:20px">{{ 'D365 workflow' if cfg.approvals == 'd365_workflow' else 'Agent' }}</div><div class="small muted">{{ 'AP review in the agent, then D365 vendor invoice workflow' if cfg.approvals == 'd365_workflow' else 'agent routing and email chasing, then transfer' }}</div></div>
+  <div class="card kpi"><div class="k">Non-PO journal name</div><div class="n" style="font-size:20px">{{ cfg.invoice_journal_name }}</div></div>
+</div>
+
+{% if check %}
+<div class="card"><h2>Entity mapping</h2>
+  <p class="small muted" style="margin-top:0">Checked against {{ 'the mock contract' if cfg.mode == 'mock' else 'your environment&#39;s $metadata'|safe }}. For a real sandbox run <code>python scripts/check_d365.py</code>; entries marked <i>verify</i> are the most likely to differ between versions.</p>
+  <table><tr><th>Direction</th><th>Purpose</th><th>Entity</th><th>Status</th></tr>
+  {% for r in check %}<tr><td class="small">{{ r.side }}</td><td class="small">{{ r.name|replace('_',' ') }}</td><td class="small"><code>{{ r.entity }}</code>{% if r.verify %} <span class="chip warn">verify</span>{% endif %}</td>
+    <td class="small"><span class="dot {{ 'pass' if r.status == 'ok' else 'fail' }}"></span>{{ r.status }}{% if r.missing_fields %}: {{ r.missing_fields|join(', ') }}{% endif %}{% if r.error %}: {{ r.error }}{% endif %}</td></tr>{% endfor %}
+  </table></div>
+{% endif %}
+
+{% if cfg.mode == 'mock' %}
+<div class="card"><h2>Records the agent created in mock D365</h2>
+  <p class="small muted" style="margin-top:0">What a real sandbox would receive through OData. Stored in <code>state/mock_d365.json</code>.</p>
+  {% for entity, rows in records.items() %}
+    <h2 style="font-size:13px;margin:14px 0 6px">{{ entity }} <span class="muted" style="font-weight:400">({{ rows|length }})</span></h2>
+    {% if rows %}
+    <div style="overflow-x:auto"><table>
+      <tr>{% for k in rows[0].keys() %}<th>{{ k }}</th>{% endfor %}</tr>
+      {% for r in rows %}<tr>{% for k in rows[0].keys() %}<td class="small" style="white-space:{{ 'pre-wrap' if k == 'Notes' else 'nowrap' }}">{{ r.get(k, '') if r.get(k) is not none else '' }}</td>{% endfor %}</tr>{% endfor %}
+    </table></div>
+    {% else %}<p class="small muted">None yet.</p>{% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

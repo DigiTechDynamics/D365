@@ -7,7 +7,8 @@
       "role": "APSpecialist",
       "approval_limit": 0,
       "email": "pchen@contoso.example",
-      "manager": "sowusu"
+      "manager": "sowusu",
+      "personnel_number": "000110"
     },
     {
       "id": "mlee",
@@ -15,7 +16,8 @@
       "role": "Buyer",
       "approval_limit": 50000,
       "email": "mlee@contoso.example",
-      "manager": "sowusu"
+      "manager": "sowusu",
+      "personnel_number": "000111"
     },
     {
       "id": "rgarcia",
@@ -23,7 +25,8 @@
       "role": "Buyer",
       "approval_limit": 50000,
       "email": "rgarcia@contoso.example",
-      "manager": "sowusu"
+      "manager": "sowusu",
+      "personnel_number": "000112"
     },
     {
       "id": "akhan",
@@ -32,7 +35,8 @@
       "approval_limit": 10000,
       "delegate_to": null,
       "email": "akhan@contoso.example",
-      "manager": "sowusu"
+      "manager": "sowusu",
+      "personnel_number": "000113"
     },
     {
       "id": "tnguyen",
@@ -40,7 +44,8 @@
       "role": "ITManager",
       "approval_limit": 10000,
       "email": "tnguyen@contoso.example",
-      "manager": "lpatel"
+      "manager": "lpatel",
+      "personnel_number": "000114"
     },
     {
       "id": "lpatel",
@@ -48,7 +53,8 @@
       "role": "ITDirector",
       "approval_limit": 15000,
       "email": "lpatel@contoso.example",
-      "manager": "sowusu"
+      "manager": "sowusu",
+      "personnel_number": "000115"
     },
     {
       "id": "dbrown",
@@ -58,7 +64,8 @@
       "out_of_office": true,
       "delegate_to": "jortiz",
       "email": "dbrown@contoso.example",
-      "manager": "sowusu"
+      "manager": "sowusu",
+      "personnel_number": "000116"
     },
     {
       "id": "jortiz",
@@ -66,7 +73,8 @@
       "role": "ProjectManager",
       "approval_limit": 25000,
       "email": "jortiz@contoso.example",
-      "manager": "sowusu"
+      "manager": "sowusu",
+      "personnel_number": "000117"
     },
     {
       "id": "sowusu",
@@ -74,7 +82,8 @@
       "role": "FinanceController",
       "approval_limit": 100000,
       "email": "sowusu@contoso.example",
-      "manager": "eward"
+      "manager": "eward",
+      "personnel_number": "000118"
     },
     {
       "id": "eward",
@@ -82,7 +91,8 @@
       "role": "CFO",
       "approval_limit": 1000000,
       "email": "eward@contoso.example",
-      "manager": null
+      "manager": null,
+      "personnel_number": "000119"
     },
     {
       "id": "jsmith",
@@ -90,7 +100,8 @@
       "role": "VendorMasterAdmin",
       "approval_limit": 0,
       "email": "jsmith@contoso.example",
-      "manager": "sowusu"
+      "manager": "sowusu",
+      "personnel_number": "000120"
     }
   ],
   "vendors": [

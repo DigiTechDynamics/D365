@@ -32,7 +32,7 @@ input[type=text],select,textarea{font:inherit;border:1px solid #c8c6c4;border-ra
 <body>
 <div class="top">
   <span class="app">AP Invoice Agent</span>
-  <nav><a href="{{ url_for('queue') }}">Captured invoices</a><a href="{{ url_for('mailbox') }}">Mail{% if ap_mail_count %} <span style="background:#ffb900;color:#000;border-radius:9px;padding:0 6px;font-size:11px;font-weight:700">{{ ap_mail_count }}</span>{% endif %}</a><a href="{{ url_for('audit') }}">Audit log</a><a href="{{ url_for('policy') }}">Policy &amp; controls</a></nav>
+  <nav><a href="{{ url_for('queue') }}">Captured invoices</a><a href="{{ url_for('mailbox') }}">Mail{% if ap_mail_count %} <span style="background:#ffb900;color:#000;border-radius:9px;padding:0 6px;font-size:11px;font-weight:700">{{ ap_mail_count }}</span>{% endif %}</a><a href="{{ url_for('d365_page') }}">D365</a><a href="{{ url_for('audit') }}">Audit log</a><a href="{{ url_for('policy') }}">Policy &amp; controls</a></nav>
   <div class="right">
     <form method="post" action="{{ url_for('clock') }}" title="Demo clock: move time forward to see reminders and escalations" style="display:flex;gap:6px;align-items:center">
       <span class="small">{{ today }}{% if clock_days %} <span style="opacity:.75">(+{{ clock_days }}d)</span>{% endif %}</span>

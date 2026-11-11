@@ -7,7 +7,7 @@ import json
 import threading
 from pathlib import Path
 
-from . import accounting, intake, master as M, matching, routing, store, validation
+from . import accounting, d365, intake, master as M, matching, routing, store, validation
 from .extract import extract_invoice
 from .models import HEADER_FIELDS, ExtractedInvoice
 
@@ -27,6 +27,7 @@ _RUN_LOCK = threading.Lock()
 def run_all():
     """Pull from mailbox / SharePoint, then read everything new in inbox/. One run at a time."""
     with _RUN_LOCK:
+        M.refresh()  # pick up master data changes (e.g. new POs or receipts in D365)
         summary = intake.run()
         created, errors = process_inbox()
         summary["errors"] += errors
@@ -100,6 +101,17 @@ def evaluate(case, actor):
 
     steps, notes = routing.build_steps(case, vendor, po, case["steps"])
     case["routing_notes"] = notes
+    if d365.approvals_in_d365():
+        # AP review (low confidence, failed checks, fraud flags) still happens here, before anything reaches D365.
+        # Approval steps are left to the D365 vendor invoice workflow.
+        steps = [s for s in steps if s["kind"] == "verify"]
+        if all(s["status"] == "approved" for s in steps):
+            case["steps"], case["status"] = steps, "approved"
+            store.audit(case["id"], actor, "handed_to_d365_workflow",
+                        "Agent checks complete - approvals will run in the D365 vendor invoice workflow")
+            store.save(case)
+            transfer(case["id"], AGENT)
+            return store.load(case["id"])
     clean = all(c["status"] in ("pass", "info") for c in case["checks"])
     t = pol["touchless"]
     if not steps and clean and t["enabled"] and case["invoice_type"] in t["invoice_types"] \
@@ -270,14 +282,46 @@ def transfer(case_id, actor):
         "approvals": [{"step": s["description"], "by": s["decided_by"], "at": s["decided_at"]}
                       for s in case["steps"]] or [{"step": "Touchless per policy", "by": AGENT, "at": store.now()}],
     }
+    d365_result = None
+    if d365.enabled():
+        try:
+            d365_result = d365.push_invoice(case, INBOX / case["source_file"], findings_note(case))
+        except Exception as e:  # leave the invoice approved so it can be retried; never half-mark it transferred
+            store.audit(case_id, actor, "d365_transfer_failed", str(e))
+            raise NotAllowed(f"D365 transfer failed: {e}") from e
+        payload["_note"] = f"Sent to D365 ({d365.mode()}). This file is the agent's own record of what was sent."
+        payload["d365"] = d365_result
     store.OUTBOX.mkdir(exist_ok=True)
     out = store.OUTBOX / f"{case['id']}.json"
     out.write_text(json.dumps(payload, indent=2))
     case["status"] = "transferred"
-    case["transfer"] = {"target": target, "file": out.name, "by": actor, "at": store.now()}
-    store.audit(case_id, actor, "transferred", f"{target} payload written to outbox/{out.name}")
+    case["transfer"] = {"target": target, "file": out.name, "by": actor, "at": store.now(),
+                        "d365": d365_result["target"] if d365_result else None, "d365_mode": d365.mode()}
+    where = (f"created in D365 ({d365.mode()}) as {d365_result['target']['type']} {d365_result['target']['reference']}"
+             f" with PDF and findings attached" if d365_result else f"payload written to outbox/{out.name}")
+    store.audit(case_id, actor, "transferred", f"{target} {where}")
     store.save(case)
     return case
+
+
+def findings_note(case):
+    """Plain-text summary of what the agent checked, attached to the invoice in D365 for AP and auditors."""
+    src = case.get("source") or {}
+    lines = [f"AP agent capture {case['id']} - {case['source_file']} (sha256 {case['sha256'][:16]}...)",
+             f"Received: {src.get('channel', 'manual')} {src.get('sender') or src.get('uploaded_by') or ''}".strip(),
+             f"Read by: {case['extraction_meta'].get('model') or 'reference extraction (demo)'}", "", "Checks:"]
+    for c in case["checks"]:
+        lines.append(f"  [{c['status'].upper()}] {c['label']}: {c['detail']}")
+    lines += ["", "Coding (with reasons):"]
+    for l in case["accounting"]["lines"]:
+        lines.append(f"  {l['description']}: {l['amount']:,.2f} -> {l['main_account']} "
+                     f"{l.get('CostCenter') or ''} {l.get('Project') or ''} ({l['source']})")
+    if case["corrections"]:
+        lines += ["", "Corrections:"] + [f"  {c['field']}: {c['old']} -> {c['new']} by {c['by']}" for c in case["corrections"]]
+    approvals = [s for s in case["steps"] if s["status"] == "approved"]
+    if approvals:
+        lines += ["", "Approved in agent:"] + [f"  {s['description']}: {s['decided_by']} at {s['decided_at']}" for s in approvals]
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------- KPIs

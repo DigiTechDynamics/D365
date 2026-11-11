@@ -75,8 +75,34 @@ Ask your Microsoft 365 admin for an Entra ID app registration with **least privi
 
 The Graph connector is written but has not been run against a live tenant - test it in a non-production tenant first.
 
-## Connecting to a real D365 F&O sandbox (next step)
+## Dynamics 365 F&O integration
 
-Replace `data/masterdata.json` with reads from your sandbox (vendors, open POs and receipts, procurement categories,
-financial dimensions, projects, posted invoices) and replace the outbox writer with a call to your sandbox's data
-entities or the Dynamics 365 ERP MCP server. Use a dedicated service identity with least-privilege roles. Never point it at production without your finance and audit teams' sign-off.
+The agent runs as a background service next to D365; AP works on the invoices in D365. Settings are in
+`config/d365.json`, and the **D365** page in the app shows the connection, the entity mapping and (in mock mode)
+every record the agent created.
+
+| | What happens |
+|---|---|
+| **Reads from D365** | Vendors, purchase orders and lines (incl. received quantity), posted vendor invoices (duplicates and coding history), projects - via OData data entities. Agent-only settings with no standard D365 field (approver users, vendor onboarding requester for SoD, registered email domains, coding rules) stay in `data/masterdata.json`. |
+| **Writes to D365** | PO invoices: **pending vendor invoice** header + lines. Overhead and project invoices: **vendor invoice journal** with offset accounts built from your account structure (e.g. `618100-BU-001-CC-210-D-030`) or the project. Both get the **PDF** and an **"AP agent findings" note** (checks, coding reasons, corrections, approvals) attached. |
+| **Approvals** | `"approvals": "agent"` - the agent's routing and email chasing, then transfer. `"approvals": "d365_workflow"` - AP review (low confidence, failed checks, fraud flags) still happens in the agent; everything else goes straight to D365 and the **vendor invoice workflow** approves. |
+| **Modes** | `off` (local files), `mock` (built-in stand-in for D365, the default - runs anywhere), `live` (your sandbox). |
+
+### Going live against a sandbox
+
+1. **App registration** in Entra ID (client secret or certificate), registered in D365 under
+   *System administration > Setup > Microsoft Entra applications* and linked to a **service user**.
+2. Give that user a **custom security role** that can read vendors, purchase orders, projects and posted invoices and
+   create pending vendor invoices, invoice journals and attachments - **not** post, approve or change master data.
+3. Set `D365_TENANT_ID`, `D365_CLIENT_ID`, `D365_CLIENT_SECRET` (Key Vault in production), and in `config/d365.json`
+   set `"mode": "live"` and your `environment_url`.
+4. Run `python scripts/check_d365.py`. It reads the environment's `$metadata` (read-only) and lists any entity or
+   field in the mapping that your version names differently. Entries marked `verify` are the most likely to need
+   adjusting - attachment entities in particular vary by version and setup.
+5. Process a few test invoices and check them in D365 before pointing it at a real mailbox.
+
+The live client has been tested against the mock and a sample `$metadata` document, **not yet against a real D365
+environment**. Never point it at production without your finance and audit teams' sign-off.
+
+Possible next phases: an X++ form extension showing the agent's findings on the invoice with a "Re-check" button,
+and reacting to D365 business events instead of polling.

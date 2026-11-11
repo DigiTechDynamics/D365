@@ -4,7 +4,7 @@ import shutil
 
 from flask import Flask, abort, flash, redirect, render_template, request, send_from_directory, session, url_for
 
-from agent import chasing, intake, mail, master as M, pipeline, sources, store
+from agent import chasing, d365, intake, mail, master as M, pipeline, sources, store
 from agent.extract import credentials_available
 from agent.models import HEADER_FIELDS
 from agent.validation import ACKNOWLEDGEABLE
@@ -91,7 +91,8 @@ def reset():
     for f in pipeline.INBOX.glob("*"):
         if f.is_file() and f.name != ".gitkeep":
             f.unlink()
-    flash("Demo reset: cases, mail, audit log, clock, outbox and inbox cleared.", "ok")
+    M.refresh()
+    flash("Demo reset: cases, mail, audit log, clock, outbox, inbox and mock D365 cleared.", "ok")
     return redirect(url_for("queue"))
 
 
@@ -178,6 +179,13 @@ def mail_close(mid):
 def mailbox():
     msgs = list(reversed(mail.all_messages()))
     return render_template("mail.html", msgs=msgs, todo=[m for m in msgs if m["status"] in ("draft", "needs_ap")])
+
+
+@app.get("/d365")
+def d365_page():
+    cfg = d365.config()
+    return render_template("d365.html", cfg=cfg, records=d365.mock_records(), source=M.md().get("_source"),
+                           check=d365.check_mapping() if d365.enabled() else [])
 
 
 @app.get("/pdf/<path:name>")

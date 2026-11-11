@@ -10,7 +10,18 @@ ROOT = Path(__file__).resolve().parent.parent
 
 @lru_cache
 def md() -> dict:
-    return json.loads((ROOT / "data" / "masterdata.json").read_text())
+    """Master data. With D365 enabled (config/d365.json), vendors, POs, posted invoices and projects come from D365;
+    agent-only settings stay in data/masterdata.json. Call refresh() to re-read."""
+    local = json.loads((ROOT / "data" / "masterdata.json").read_text())
+    from . import d365
+    if d365.enabled():
+        return d365.load_masterdata(local)
+    local["_source"] = "local file"
+    return local
+
+
+def refresh():
+    md.cache_clear()
 
 
 @lru_cache
