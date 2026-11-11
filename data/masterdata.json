@@ -14,17 +14,17 @@
     {"id": "jsmith",  "name": "Jamie Smith",    "role": "VendorMasterAdmin", "approval_limit": 0}
   ],
   "vendors": [
-    {"account": "US-104", "name": "Fabrikam Industrial Supply", "tax_id": "91-4410276", "currency": "USD", "status": "active",
+    {"account": "US-104", "email_domains": ["fabrikam-supply.example"], "name": "Fabrikam Industrial Supply", "tax_id": "91-4410276", "currency": "USD", "status": "active",
      "tax_group": "WA-GOODS", "payment_terms_days": 30, "requested_by": "mlee", "created_by": "jsmith", "default_coding": null},
-    {"account": "US-118", "name": "Proseware Packaging Co.", "tax_id": "84-2219034", "currency": "USD", "status": "active",
+    {"account": "US-118", "email_domains": ["proseware.example"], "name": "Proseware Packaging Co.", "tax_id": "84-2219034", "currency": "USD", "status": "active",
      "tax_group": "WA-GOODS", "payment_terms_days": 30, "requested_by": null, "created_by": "jsmith", "default_coding": null},
-    {"account": "US-210", "name": "Northwind Facility Services", "tax_id": "47-8812350", "currency": "USD", "status": "active",
+    {"account": "US-210", "email_domains": ["northwind-fs.example"], "name": "Northwind Facility Services", "tax_id": "47-8812350", "currency": "USD", "status": "active",
      "tax_group": "SERV-EXEMPT", "payment_terms_days": 15, "requested_by": null, "created_by": "jsmith",
      "default_coding": {"main_account": "618100", "CostCenter": "CC-210", "Department": "D-030", "BusinessUnit": "BU-001"}},
-    {"account": "US-305", "name": "Adatum IT Consulting", "tax_id": "26-5530918", "currency": "USD", "status": "active",
+    {"account": "US-305", "email_domains": ["adatum-consulting.example"], "name": "Adatum IT Consulting", "tax_id": "26-5530918", "currency": "USD", "status": "active",
      "tax_group": "SERV-EXEMPT", "payment_terms_days": 30, "requested_by": "tnguyen", "created_by": "jsmith",
      "default_coding": {"main_account": "605200", "CostCenter": "CC-410", "Department": "D-040", "BusinessUnit": "BU-001"}},
-    {"account": "US-412", "name": "Litware Engineering Subcontractors", "tax_id": "33-7781204", "currency": "USD", "status": "active",
+    {"account": "US-412", "email_domains": ["litware-eng.example"], "name": "Litware Engineering Subcontractors", "tax_id": "33-7781204", "currency": "USD", "status": "active",
      "tax_group": "SERV-EXEMPT", "payment_terms_days": 30, "requested_by": null, "created_by": "jsmith", "default_coding": null}
   ],
   "purchase_orders": [

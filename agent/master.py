@@ -18,6 +18,11 @@ def policy() -> dict:
     return json.loads((ROOT / "config" / "policy.json").read_text())
 
 
+@lru_cache
+def sources_config() -> dict:
+    return json.loads((ROOT / "config" / "sources.json").read_text())
+
+
 def user(uid):
     return next((u for u in md()["users"] if u["id"] == uid), None)
 

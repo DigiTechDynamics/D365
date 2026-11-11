@@ -9,6 +9,7 @@ sample invoices, so the rest of the pipeline can be shown offline.
 import base64
 import json
 import os
+import re
 from pathlib import Path
 
 from .models import ExtractedInvoice
@@ -40,6 +41,8 @@ def extract_invoice(pdf_path: Path, model: str) -> tuple[ExtractedInvoice, dict]
     """Return (extraction, meta). meta says how the extraction was produced."""
     if os.environ.get("INVOICE_AGENT_DEMO") == "1" or not credentials_available():
         ref = DEMO_DIR / (pdf_path.stem + ".json")
+        if not ref.exists():  # intake renames clashing files to name-1.pdf, name-2.pdf ...
+            ref = DEMO_DIR / (re.sub(r"-\d+$", "", pdf_path.stem) + ".json")
         if not ref.exists():
             raise RuntimeError(f"No API credentials and no demo extraction for {pdf_path.name}. "
                                "Set ANTHROPIC_API_KEY to read new invoices.")

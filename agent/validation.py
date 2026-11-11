@@ -24,6 +24,26 @@ def run(case, ext, vendor, po, other_cases):
         if vendor["status"] != "active":
             out.append(check("vendor_status", "Vendor is active and not on hold", "fail", f"Status: {vendor['status']}", True))
 
+    # Where it came from: sender domain and payment-detail change requests (common invoice fraud patterns)
+    src = case.get("source") or {}
+    if src.get("channel") == "email":
+        sender = src.get("sender") or ""
+        domain = sender.split("@")[-1]
+        if vendor and M.sources_config()["screening"].get("require_known_sender_domain"):
+            known = vendor.get("email_domains", [])
+            ok = domain in known
+            out.append(check("sender", "Sent from the vendor's registered email domain", "pass" if ok else "fail",
+                             f"{sender} {'matches' if ok else 'is NOT registered for'} {vendor['account']} "
+                             f"(on file: {', '.join(known) or 'none'})"))
+        text = f"{src.get('subject', '')} {src.get('body_excerpt', '')}".lower()
+        hits = [p for p in M.sources_config()["screening"]["payment_change_phrases"] if p in text]
+        if hits:
+            out.append(check("payment_change", "No request to change payment details", "fail",
+                             f"Email mentions: {', '.join(hits)}. Confirm with the vendor using contact details already "
+                             "on file - never the ones in the email - before this invoice is paid."))
+    elif src.get("channel") == "sharepoint":
+        out.append(check("source", "Source", "info", f"Uploaded to {src.get('location')} by {src.get('uploaded_by') or 'unknown'}"))
+
     # Duplicate
     num = (ext.invoice_number.value or "").strip().upper()
     dup = None
@@ -133,4 +153,14 @@ def run(case, ext, vendor, po, other_cases):
 
     if ext.notes:
         out.append(check("notes", "Notes from the document", "info", ext.notes))
+
+    # A person can clear selected checks with a recorded reason (e.g. "called vendor on number on file").
+    for c in out:
+        ack = case.get("acknowledged", {}).get(c["id"])
+        if ack and c["status"] == "fail" and c["id"] in ACKNOWLEDGEABLE:
+            c["status"] = "pass"
+            c["detail"] += f" | Cleared by {ack['by']}: {ack['note']}"
     return out
+
+
+ACKNOWLEDGEABLE = {"sender", "payment_change"}

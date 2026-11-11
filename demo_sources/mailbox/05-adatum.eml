@@ -1,0 +1,69 @@
+From: Adatum Accounts <accounts@adatum-consu1ting.example>
+To: ap-invoices@contoso.example
+Subject: URGENT: invoice ADT-4471 and updated bank details
+Date: Tue, 03 Nov 2026 07:58:00 -0800
+Message-ID: <demo-005@mail.contoso.example>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============1451586294773385961=="
+
+--===============1451586294773385961==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Dear customer,
+
+Please find invoice ADT-4471 attached. Please note we have changed our bank d=
+etails. Kindly remit payment to the new account below as this is an urgent pa=
+yment.
+
+Account number: XXXX-0000-DEMO
+
+Regards,
+Adatum Accounts
+
+--===============1451586294773385961==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="ADT-4471.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjMKJenr8b8KMSAwIG9iago8PAovQ291bnQgMQovS2lkcyBbMyAwIFJdCi9NZWRpYUJv
+eCBbMCAwIDYxMiA3OTJdCi9UeXBlIC9QYWdlcwo+PgplbmRvYmoKMiAwIG9iago8PAovT3BlbkFj
+dGlvbiBbMyAwIFIgL0ZpdEggbnVsbF0KL1BhZ2VMYXlvdXQgL09uZUNvbHVtbgovUGFnZXMgMSAw
+IFIKL1R5cGUgL0NhdGFsb2cKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL0NvbnRlbnRzIDQgMCBSCi9Q
+YXJlbnQgMSAwIFIKL1Jlc291cmNlcyA4IDAgUgovVHlwZSAvUGFnZQo+PgplbmRvYmoKNCAwIG9i
+ago8PAovRmlsdGVyIC9GbGF0ZURlY29kZQovTGVuZ3RoIDk3NQo+PgpzdHJlYW0KeJydl01T40YQ
+hu/8ij6yVbgz3x/cALNVTlU2LBbZCxdhD6BEH0QaO/jfb41tyZYQsjYnlWzped/p7ulpMfj9jKDU
+8N/ZdQS/faXAGBIC0TPcRmf/wnUEnCI1oAVBIiFaAkFKpAWCjGkJBLkiBsoXOJ99++vP2c3tF4j+
+htsIvtdESvuJVKPhe6JUtnMJxKtl7FcZzCK4KfJqlfokf+ngGdh+OmFoxCBdhvfc4hVuXO5dCdPy
+Aq5dmrr1yl3AjyuwhhBx0DuiK2NQ6UF6FL/DbHoJTE2k5MRS88E5JR3rgjDkEjRlKNQgfZavi2Th
+IC8uP8a7i5VUo9VjsFfTaCKEpqetciuQUFBWjrW6jL0bZZahlWPAjDA1oWTCR9gVRIfIKm1QyEHq
+dPXLVk9Dd1bphJP+ciIC9TDhOklT8MXI6pfGnoreTZH7oirgNtS+j5M8c7mH+abyLoOH+RU8nj/M
+//j6+KXXsdQSmRmupcWiWOW+grt4Ez+lDqbuzWM/TVGkdJBGCYHa8nW6Xl7AvVtmRb6sd6pkBzRB
+y6gCgpZzHi4iQOo8tkLGTKgLySkyCoohVzChNrSO0sFz/TelyDVkYAlqWt+mMD9aAjUo7fBG8C47
+Xv4etpNmwoYiOtZuiWXABUGqOuKWoxRjxKeuWpTJm0+K/NhDDd2ZkAqVbXloi2bArUIjuxHQNvSC
+ES6++01LfU/bqWsbmC31lloGQitkrKMuOEUzKgEPeeLhrUwW7thEDd2Z2AX92ERbNAOpFFreMSF5
+OBbHmLjKwq44GNhVmLAUJW8qbH+bwrx3n7ceairj8NKhMoQ1pzrLLIJFc7pC5cp1snAVTOD2/g6S
+3LuXMg5lA4/nr8WqrNodoa3dFEjbCzfbw2KEGct66qOB71PRhgsh0agxcGolklYHbgOb3LYFJBNI
+xgnoCxvmJPIhvZqGndWkd3cb0tsks36iDmjzyFEytUE73CajMl67FNz7m8urbRYXaRIae5V4B+uk
+SnzVl75GfR/xljo32/09Qp72Za9m18FusevsnWZLRT7JXi1QZ68lILkK8+3/EPh0luAKNQEhDerh
+M3a+evKFj9POoSepRUXHAKi5kKS77K0FhkyB4AYtG7YQp64CH793PQiBio8h9ASlZxYSTG7XRC2S
+4bkgChGBh/n0k6icJvREZXAaCueTGu7Kd/FmO/94V2bVJXxzHj6Z1biSKIcjdu+yxIMvLqHvAwYm
+EO9GI3D5MvwgDOuOsPzDUpgwodg5F8iHv2ui1zj/BzbFCp6LMlxLeFpVSe6q6mj8+gmfgC8xCmVu
+ZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYS1Cb2xkCi9FbmNv
+ZGluZyAvV2luQW5zaUVuY29kaW5nCi9TdWJ0eXBlIC9UeXBlMQovVHlwZSAvRm9udAo+PgplbmRv
+YmoKNiAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYQovRW5jb2RpbmcgL1dpbkFuc2lFbmNv
+ZGluZwovU3VidHlwZSAvVHlwZTEKL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjcgMCBvYmoKPDwKL0Jh
+c2VGb250IC9IZWx2ZXRpY2EtT2JsaXF1ZQovRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZwovU3Vi
+dHlwZSAvVHlwZTEKL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjggMCBvYmoKPDwKL0ZvbnQgPDwvRjEg
+NSAwIFIKL0YyIDYgMCBSCi9GMyA3IDAgUj4+Ci9Qcm9jU2V0IFsvUERGIC9UZXh0IC9JbWFnZUIg
+L0ltYWdlQyAvSW1hZ2VJXQo+PgplbmRvYmoKOSAwIG9iago8PAovQ3JlYXRpb25EYXRlIChEOjIw
+MjYxMTExMDQ0NTQyWikKPj4KZW5kb2JqCnhyZWYKMCAxMAowMDAwMDAwMDAwIDY1NTM1IGYgCjAw
+MDAwMDAwMTUgMDAwMDAgbiAKMDAwMDAwMDA5NiAwMDAwMCBuIAowMDAwMDAwMTk5IDAwMDAwIG4g
+CjAwMDAwMDAyNzkgMDAwMDAgbiAKMDAwMDAwMTMyNiAwMDAwMCBuIAowMDAwMDAxNDI4IDAwMDAw
+IG4gCjAwMDAwMDE1MjUgMDAwMDAgbiAKMDAwMDAwMTYzMCAwMDAwMCBuIAowMDAwMDAxNzM3IDAw
+MDAwIG4gCnRyYWlsZXIKPDwKL1NpemUgMTAKL1Jvb3QgMiAwIFIKL0luZm8gOSAwIFIKL0lEIFs8
+REJCRkYzMTI1MEIzNzMyMTY0NkY0RURGRTg2N0E1M0Y+PERCQkZGMzEyNTBCMzczMjE2NDZGNEVE
+RkU4NjdBNTNGPl0KPj4Kc3RhcnR4cmVmCjE3OTIKJSVFT0YK
+
+--===============1451586294773385961==--

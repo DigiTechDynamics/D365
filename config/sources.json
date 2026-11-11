@@ -1,0 +1,32 @@
+{
+  "_comment": "Where invoices come from. mode 'demo' reads local folders that stand in for the mailbox and SharePoint library; mode 'graph' uses Microsoft Graph with GRAPH_TENANT_ID / GRAPH_CLIENT_ID / GRAPH_CLIENT_SECRET.",
+  "sources": [
+    {
+      "id": "ap-mailbox",
+      "type": "mailbox",
+      "enabled": true,
+      "mode": "demo",
+      "mailbox": "ap-invoices@contoso.example",
+      "demo_folder": "demo_sources/mailbox",
+      "graph": {"folder": "inbox", "processed_folder": "Processed by agent", "max_messages": 25}
+    },
+    {
+      "id": "ap-sharepoint",
+      "type": "sharepoint",
+      "enabled": true,
+      "mode": "demo",
+      "site": "contoso.sharepoint.com:/sites/Finance",
+      "folder": "AP/Incoming",
+      "demo_folder": "demo_sources/sharepoint/AP/Incoming",
+      "demo_uploaded_by": "jortiz",
+      "graph": {"processed_folder": "AP/Processed", "max_items": 50}
+    }
+  ],
+  "screening": {
+    "allowed_extensions": [".pdf"],
+    "max_size_mb": 10,
+    "require_known_sender_domain": true,
+    "payment_change_phrases": ["bank details", "bank account", "new account", "account number", "routing number",
+                               "iban", "swift", "remit to a new", "changed our bank", "wire transfer", "urgent payment"]
+  }
+}

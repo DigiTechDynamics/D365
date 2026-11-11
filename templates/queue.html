@@ -2,8 +2,21 @@
 {% block body %}
 <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
   <h1>Captured invoices</h1>
-  <form method="post" action="{{ url_for('process') }}" style="margin-left:auto"><button class="btn primary">Process inbox ({{ inbox|length }} files)</button></form>
-  <form method="post" action="{{ url_for('reset') }}" onsubmit="return confirm('Clear all cases, audit log and outbox?')"><button class="btn">Reset demo</button></form>
+  <form method="post" action="{{ url_for('process') }}" style="margin-left:auto"><button class="btn primary">Check sources &amp; process</button></form>
+  <form method="post" action="{{ url_for('reset') }}" onsubmit="return confirm('Clear all cases, audit log, outbox and inbox?')"><button class="btn">Reset demo</button></form>
+</div>
+<div class="card" style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+  <div><h2 style="margin-bottom:6px">Invoice sources</h2>
+    {% for s in sources %}<div class="small"><span class="dot {{ 'pass' if s.enabled else 'pending' }}"></span>
+      <b>{{ 'Mailbox' if s.type == 'mailbox' else 'SharePoint' }}</b> {{ s.mailbox if s.type == 'mailbox' else s.site ~ ' / ' ~ s.folder }}
+      <span class="chip {{ 'warn' if s.mode == 'demo' else 'ok' }}" style="margin-left:4px">{{ 'demo folder' if s.mode == 'demo' else 'Microsoft Graph' }}</span></div>{% endfor %}
+    <div class="small"><span class="dot pass"></span><b>Manual</b> files dropped in the inbox folder</div>
+  </div>
+  {% if last_run %}
+  <div style="flex:1;min-width:280px"><h2 style="margin-bottom:6px">Last intake <span class="small muted" style="font-weight:400">{{ last_run.at[:16]|replace('T',' ') }} UTC</span></h2>
+    <div class="small">{{ last_run.accepted|length }} received &middot; {{ last_run.rejected|length }} rejected{% if last_run.errors %} &middot; <span style="color:var(--bad)">{{ last_run.errors|length }} source error(s)</span>{% endif %}</div>
+    {% for r in last_run.rejected %}<div class="small"><span class="dot fail"></span>{{ r.file or '(no attachment)' }} from {{ r.from }} - {{ r.reason }}</div>{% endfor %}
+  </div>{% endif %}
 </div>
 <div class="kpis">
   <div class="card kpi"><div class="k">Invoices captured</div><div class="n">{{ k.total }}</div></div>
@@ -20,7 +33,7 @@
   {% set issue = (c.checks|selectattr('status','in',['fail','warn'])|list|first) %}
   <tr>
     <td><a href="{{ url_for('case', cid=c.id) }}"><b>{{ c.id }}</b></a></td>
-    <td>{{ c.header.vendor_name }}<div class="small muted">{{ c.vendor_account or 'not matched' }}</div></td>
+    <td>{{ c.header.vendor_name }}<div class="small muted">{{ c.vendor_account or 'not matched' }} &middot; via {{ {'email':'email','sharepoint':'SharePoint'}.get((c.source or {}).channel, 'manual') }}</div></td>
     <td>{{ c.header.invoice_number }}<div class="small muted">{{ c.header.invoice_date }}</div></td>
     <td>{{ {'po':'PO invoice','cost':'Overhead (no PO)','project':'Project'}[c.invoice_type] }}</td>
     <td class="r">{{ c.header.total|money }}</td>
@@ -29,7 +42,7 @@
     <td class="small">{% if issue %}<span class="dot {{ issue.status }}"></span>{{ issue.detail }}{% else %}<span class="dot pass"></span>All checks passed{% endif %}</td>
   </tr>
   {% else %}
-  <tr><td colspan="8" class="muted">No invoices yet. Click <b>Process inbox</b> to read the PDFs in the inbox folder.</td></tr>
+  <tr><td colspan="8" class="muted">No invoices yet. Click <b>Check sources &amp; process</b> to collect invoices from the mailbox and SharePoint.</td></tr>
   {% endfor %}
 </table>
 </div>

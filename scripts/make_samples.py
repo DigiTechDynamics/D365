@@ -1,15 +1,21 @@
-"""Generate fictional sample vendor invoices (PDF) plus reference extractions for demo mode.
+"""Generate fictional sample vendor invoices (PDF), reference extractions for demo mode, and the demo
+mailbox (.eml files) and SharePoint folder that stand in for Microsoft 365.
 
-All companies, people and numbers are made up. Run:  python scripts/make_samples.py
+All companies, people, domains and numbers are made up. Run:  python scripts/make_samples.py
 """
 import json
+import shutil
+from email.message import EmailMessage
 from pathlib import Path
 
 from fpdf import FPDF
 
 ROOT = Path(__file__).resolve().parent.parent
-INBOX = ROOT / "inbox"
+SAMPLES = ROOT / "samples"
 TRUTH = ROOT / "data" / "demo_extractions"
+MAILBOX = ROOT / "demo_sources" / "mailbox"
+SHAREPOINT = ROOT / "demo_sources" / "sharepoint" / "AP" / "Incoming"
+AP_MAILBOX = "ap-invoices@contoso.example"
 
 BILL_TO = ["Contoso Entertainment System USA (USMF)", "Accounts Payable Dept.", "100 Contoso Blvd, Redmond, WA 98052"]
 
@@ -166,8 +172,8 @@ def render(inv: dict) -> None:
     pdf.set_font("Helvetica", "I", 9)
     pdf.cell(0, 5, "Thank you for your business.", align="C")
 
-    INBOX.mkdir(parents=True, exist_ok=True)
-    pdf.output(str(INBOX / inv["file"]))
+    SAMPLES.mkdir(parents=True, exist_ok=True)
+    pdf.output(str(SAMPLES / inv["file"]))
 
     # Reference extraction used in demo mode (no API key). Mirrors agent/models.py.
     def tf(field, value, default=0.98):
@@ -196,7 +202,58 @@ def render(inv: dict) -> None:
     (TRUTH / (Path(inv["file"]).stem + ".json")).write_text(json.dumps(truth, indent=2))
 
 
+EMAILS = [
+    # (file, from, subject, date, body, attachments)
+    ("01-fabrikam.eml", "Fabrikam Billing <billing@fabrikam-supply.example>", "Invoice FIS-77821 - PO 00001942",
+     "Wed, 28 Oct 2026 09:14:00 -0700", "Hello,\n\nPlease find attached invoice FIS-77821 for PO 00001942.\n\nRegards,\nFabrikam Billing",
+     ["FIS-77821.pdf"]),
+    ("02-proseware.eml", "Proseware AR <ar@proseware.example>", "Invoice PW-5530",
+     "Mon, 02 Nov 2026 11:02:00 -0800", "Hi AP team,\n\nInvoice PW-5530 attached. Note our box prices increased this quarter.\n\nThanks,\nProseware Accounts Receivable",
+     ["PW-5530.pdf"]),
+    ("03-northwind.eml", "Northwind Accounts <accounts@northwind-fs.example>", "October cleaning invoice NW-2026-1102",
+     "Sun, 01 Nov 2026 16:40:00 -0800", "Good afternoon,\n\nAttached is our invoice for October janitorial services.\n\nNorthwind Facility Services",
+     ["NW-2026-1102.pdf"]),
+    ("04-northwind-reminder.eml", "Northwind Accounts <accounts@northwind-fs.example>", "SECOND NOTICE: invoice NW-2026-1088",
+     "Tue, 03 Nov 2026 08:05:00 -0800", "Our records show invoice NW-2026-1088 as unpaid. A copy is attached.\n\nNorthwind Facility Services",
+     ["NW-2026-1088-resent.pdf"]),
+    ("05-adatum.eml", "Adatum Accounts <accounts@adatum-consu1ting.example>", "URGENT: invoice ADT-4471 and updated bank details",
+     "Tue, 03 Nov 2026 07:58:00 -0800",
+     "Dear customer,\n\nPlease find invoice ADT-4471 attached. Please note we have changed our bank details. "
+     "Kindly remit payment to the new account below as this is an urgent payment.\n\nAccount number: XXXX-0000-DEMO\n\n"
+     "Regards,\nAdatum Accounts", ["ADT-4471.pdf"]),
+    ("06-unknown.eml", "Accounts Dept <payables@quick-invoice-portal.example>", "Overdue invoice - action required",
+     "Wed, 04 Nov 2026 02:11:00 -0800", "Your invoice is overdue. Open the attached document to view and pay.",
+     [("Invoice_8812.html", b"<html><body><h1>Invoice</h1><p>Sign in to view your invoice.</p></body></html>")]),
+    ("07-fabrikam-reminder.eml", "Fabrikam Billing <billing@fabrikam-supply.example>", "Reminder: invoice FIS-77821",
+     "Thu, 05 Nov 2026 09:30:00 -0800", "Friendly reminder - invoice FIS-77821 attached again for convenience.",
+     ["FIS-77821.pdf"]),
+    ("08-proseware-question.eml", "Proseware AR <ar@proseware.example>", "Question about PO 00001977",
+     "Thu, 05 Nov 2026 10:00:00 -0800", "Hi, could you confirm the delivery address for PO 00001977? Thanks.", []),
+]
+
+
+def build_demo_sources():
+    shutil.rmtree(ROOT / "demo_sources", ignore_errors=True)
+    MAILBOX.mkdir(parents=True)
+    SHAREPOINT.mkdir(parents=True)
+    for i, (fname, sender, subject, date, body, atts) in enumerate(EMAILS, 1):
+        msg = EmailMessage()
+        msg["From"], msg["To"], msg["Subject"], msg["Date"] = sender, AP_MAILBOX, subject, date
+        msg["Message-ID"] = f"<demo-{i:03d}@mail.contoso.example>"
+        msg.set_content(body)
+        for a in atts:
+            if isinstance(a, tuple):
+                msg.add_attachment(a[1], maintype="text", subtype="html", filename=a[0])
+            else:
+                msg.add_attachment((SAMPLES / a).read_bytes(), maintype="application", subtype="pdf", filename=a)
+        (MAILBOX / fname).write_bytes(bytes(msg))
+    # The project team uploads subcontractor invoices to SharePoint.
+    shutil.copy(SAMPLES / "LIT-0931.pdf", SHAREPOINT / "LIT-0931.pdf")
+
+
 if __name__ == "__main__":
     for inv in INVOICES:
         render(inv)
         print("created", inv["file"])
+    build_demo_sources()
+    print("demo mailbox:", len(EMAILS), "emails; SharePoint folder: 1 file")

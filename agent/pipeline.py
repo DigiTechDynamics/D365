@@ -4,9 +4,10 @@ The agent ("svc-ap-agent") only proposes. People approve, and every action is wr
 """
 import hashlib
 import json
+import threading
 from pathlib import Path
 
-from . import accounting, master as M, matching, routing, store, validation
+from . import accounting, intake, master as M, matching, routing, store, validation
 from .extract import extract_invoice
 from .models import HEADER_FIELDS, ExtractedInvoice
 
@@ -20,13 +21,31 @@ class NotAllowed(Exception):
 
 # ---------------------------------------------------------------- capture
 
+_RUN_LOCK = threading.Lock()
+
+
+def run_all():
+    """Pull from mailbox / SharePoint, then read everything new in inbox/. One run at a time."""
+    with _RUN_LOCK:
+        summary = intake.run()
+        created, errors = process_inbox()
+        summary["errors"] += errors
+        return summary, created
+
+
 def process_inbox():
+    """Read every new PDF in inbox/. A file that fails is logged and skipped; the rest still run."""
     done = {c["source_file"] for c in store.all_cases()}
-    created = []
+    created, errors = [], []
     for pdf in sorted(INBOX.glob("*.pdf")):
-        if pdf.name not in done:
+        if pdf.name in done:
+            continue
+        try:
             created.append(process_file(pdf))
-    return created
+        except Exception as e:
+            errors.append(f"{pdf.name}: {e}")
+            store.audit("INTAKE", AGENT, "read_failed", f"{pdf.name}: {e}")
+    return created, errors
 
 
 def process_file(pdf: Path):
@@ -35,11 +54,16 @@ def process_file(pdf: Path):
         "id": store.next_id(), "source_file": pdf.name,
         "sha256": hashlib.sha256(pdf.read_bytes()).hexdigest(),
         "received_at": store.now(), "extraction_meta": meta, "extraction": ext.model_dump(),
+        "source": intake.source_of(pdf.name) or {"channel": "manual", "location": "inbox folder"},
+        "acknowledged": {},
         "corrections": [], "coding_overrides": {}, "verified_fields": [], "ap_verified": False,
         "steps": [], "status": "new", "touchless": False, "transfer": None,
     }
+    src = case["source"]
+    origin = {"email": f"email from {src.get('sender')}", "sharepoint": f"SharePoint ({src.get('location')})"}.get(
+        src["channel"], "manual drop")
     store.audit(case["id"], AGENT, "captured",
-                f"Read {pdf.name} ({'reference extraction, demo mode' if meta['mode'] == 'demo' else meta['model']})",
+                f"Read {pdf.name} from {origin} ({'reference extraction, demo mode' if meta['mode'] == 'demo' else meta['model']})",
                 {"sha256": case["sha256"]})
     evaluate(case, AGENT)
     return case
@@ -135,6 +159,19 @@ def correct_fields(case_id, user_id, values):
         if field not in case["verified_fields"]:
             case["verified_fields"].append(field)
     store.audit(case_id, user_id, "fields_verified", "; ".join(changed) if changed else "Confirmed values as extracted")
+    return evaluate(case, user_id)
+
+
+def acknowledge_check(case_id, user_id, check_id, note):
+    """AP clears a sender or payment-change flag, with the reason recorded (e.g. call-back to a known number)."""
+    case = store.load(case_id)
+    _require_ap(user_id)
+    if case["status"] != "pending" or check_id not in validation.ACKNOWLEDGEABLE:
+        raise NotAllowed("This check cannot be cleared here.")
+    if len((note or "").strip()) < 10:
+        raise NotAllowed("Record how you confirmed it (for example who you called and on which number on file).")
+    case.setdefault("acknowledged", {})[check_id] = {"by": user_id, "note": note.strip(), "at": store.now()}
+    store.audit(case_id, user_id, "check_cleared", f"{check_id}: {note.strip()}")
     return evaluate(case, user_id)
 
 

@@ -46,6 +46,19 @@
   </div>
 
   <div>
+    {# ---------- source ---------- #}
+    <div class="card">
+      <h2>Received {{ {'email':'by email','sharepoint':'from SharePoint'}.get(src.channel, 'manually') }}</h2>
+      {% if src.channel == 'email' %}
+        <div class="small"><b>From:</b> {{ src.sender_name or '' }} &lt;{{ src.sender }}&gt; &middot; <b>To:</b> {{ src.location }} &middot; {{ (src.received or '')[:16]|replace('T',' ') }}</div>
+        <div class="small"><b>Subject:</b> {{ src.subject }}</div>
+        {% if src.body_excerpt %}<details style="margin-top:6px"><summary class="small" style="cursor:pointer;color:var(--brand)">Email text</summary>
+          <pre class="small" style="white-space:pre-wrap;background:#faf9f8;border:1px solid var(--line);padding:8px;margin:6px 0 0">{{ src.body_excerpt }}</pre></details>{% endif %}
+      {% elif src.channel == 'sharepoint' %}
+        <div class="small"><b>Library:</b> {{ src.location }} &middot; <b>Uploaded by:</b> {{ src.uploaded_by or 'unknown' }}</div>
+      {% else %}<div class="small muted">Dropped into the inbox folder.</div>{% endif %}
+    </div>
+
     {# ---------- header ---------- #}
     <div class="card">
       <h2>Invoice header <span class="chip ok">Read by AI</span> {% if c.corrections %}<span class="chip warn">{{ c.corrections|length }} correction(s)</span>{% endif %}</h2>
@@ -132,7 +145,15 @@
     <div class="card">
       <h2>Validation checks</h2>
       <table>{% for ch in c.checks %}
-        <tr><td style="width:38%"><span class="dot {{ ch.status }}"></span>{{ ch.label }}{% if ch.blocking and ch.status == 'fail' %} <span class="chip bad">blocking</span>{% endif %}</td><td class="small muted">{{ ch.detail }}</td></tr>
+        <tr><td style="width:38%"><span class="dot {{ ch.status }}"></span>{{ ch.label }}{% if ch.blocking and ch.status == 'fail' %} <span class="chip bad">blocking</span>{% endif %}</td>
+          <td class="small muted">{{ ch.detail }}
+          {% if ch.status == 'fail' and ch.id in ackable and c.status == 'pending' and me.role == 'APSpecialist' %}
+            <form method="post" action="{{ url_for('clear_check', cid=c.id) }}" style="display:flex;gap:6px;margin-top:6px">
+              <input type="hidden" name="check" value="{{ ch.id }}">
+              <input type="text" name="note" placeholder="How you confirmed it, e.g. called vendor on number on file" required minlength="10">
+              <button class="btn">Clear with reason</button>
+            </form>
+          {% endif %}</td></tr>
       {% endfor %}</table>
     </div>
 

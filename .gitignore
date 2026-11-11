@@ -3,3 +3,5 @@ outbox/
 __pycache__/
 .env
 .claude/
+inbox/*
+!inbox/.gitkeep

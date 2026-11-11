@@ -4,7 +4,8 @@ import shutil
 
 from flask import Flask, abort, flash, redirect, render_template, request, send_from_directory, session, url_for
 
-from agent import master as M, pipeline, routing, store
+from agent import intake, master as M, pipeline, routing, sources, store
+from agent.validation import ACKNOWLEDGEABLE
 from agent.extract import credentials_available
 from agent.models import HEADER_FIELDS
 
@@ -49,16 +50,20 @@ def queue():
     target = M.users_with_role(esc.split(":", 1)[1])[0]["name"] if esc.startswith("role:") else esc
     overdue = {c["id"]: target for c in cases
                if (s := pipeline.current_step(c)) and routing.overdue(s)}
+    runs = intake.registry()["runs"]
     return render_template("queue.html", cases=cases, k=pipeline.kpis(), overdue=overdue,
-                           sla=M.policy()["escalation"]["sla_days"],
-                           inbox=sorted(p.name for p in pipeline.INBOX.glob("*.pdf")))
+                           sla=M.policy()["escalation"]["sla_days"], sources=sources.config()["sources"],
+                           last_run=runs[-1] if runs else None)
 
 
 @app.post("/process")
 def process():
     try:
-        created = pipeline.process_inbox()
-        flash(f"Processed {len(created)} new invoice(s)." if created else "No new invoices in the inbox.", "ok")
+        summary, created = pipeline.run_all()
+        flash(f"Checked sources: {len(summary['accepted'])} file(s) received, {len(summary['rejected'])} rejected. "
+              f"Read {len(created)} new invoice(s).", "ok")
+        for err in summary["errors"]:
+            flash(f"Source error - {err}", "bad")
     except Exception as e:  # surfaced to the user rather than hidden
         flash(f"Processing failed: {e}", "bad")
     return redirect(url_for("queue"))
@@ -68,8 +73,17 @@ def process():
 def reset():
     shutil.rmtree(store.STATE, ignore_errors=True)
     shutil.rmtree(store.OUTBOX, ignore_errors=True)
-    flash("Demo reset: cases, audit log and outbox cleared.", "ok")
+    for f in pipeline.INBOX.glob("*"):
+        if f.is_file() and f.name != ".gitkeep":
+            f.unlink()
+    flash("Demo reset: cases, audit log, outbox and inbox cleared. The demo mailbox and SharePoint folder will be read again.", "ok")
     return redirect(url_for("queue"))
+
+
+@app.post("/case/<cid>/clear-check")
+def clear_check(cid):
+    _guard(lambda: pipeline.acknowledge_check(cid, me(), request.form["check"], request.form.get("note", "")))
+    return redirect(url_for("case", cid=cid))
 
 
 @app.get("/case/<cid>")
@@ -88,6 +102,7 @@ def case(cid):
         audit=store.read_audit(cid), threshold=M.policy()["confidence_threshold"], fields=HEADER_FIELDS,
         accounts=data["main_accounts"], dims=data["dimensions"], projects=data["projects"],
         lines=c["extraction"]["lines"], match_by_line={m["invoice_line"]: m for m in c["matches"]},
+        ackable=ACKNOWLEDGEABLE, src=c.get("source") or {"channel": "manual"},
     )
 
 
