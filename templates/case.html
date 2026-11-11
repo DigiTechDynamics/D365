@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_msg.html" import message %}
 {% block title %}{{ c.id }} - AP Invoice Agent{% endblock %}
 {% block body %}
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:6px">
@@ -167,6 +168,21 @@
             <td class="small">{{ s.status|capitalize }}{% if s.decided_at %}<div class="muted">{{ s.decided_at[:16]|replace('T',' ') }}{% if s.comment %} &middot; "{{ s.comment }}"{% endif %}</div>{% endif %}</td></tr>
       {% endfor %}</table>
       {% for n in c.routing_notes or [] %}<div class="small" style="margin-top:6px"><span class="dot info"></span>{{ n }}</div>{% endfor %}
+    </div>
+
+    {# ---------- approval emails ---------- #}
+    <div class="card" id="mail">
+      <h2>Approval emails</h2>
+      {% for m in messages %}{{ message(m, me) }}{% else %}<p class="small muted">No emails yet. The agent drafts an approval request when the invoice reaches an approver.</p>{% endfor %}
+      {% if step and step.kind == 'approve' %}
+      <details style="margin-top:6px"><summary class="small" style="cursor:pointer;color:var(--brand)">Demo: simulate an email reply arriving in the AP mailbox</summary>
+        <form method="post" action="{{ url_for('reply', cid=c.id) }}" style="display:grid;gap:6px;margin-top:6px">
+          <label class="small">From
+            <select name="sender">{% for u in users %}<option value="{{ u.email }}" {{ 'selected' if approver and u.id == approver.id }}>{{ u.name }} &lt;{{ u.email }}&gt;{{ ' - current approver' if approver and u.id == approver.id }}</option>{% endfor %}</select></label>
+          <textarea name="body" rows="3" placeholder="e.g. Approved - travel was agreed in the SOW.   or   Why is travel included?" required></textarea>
+          <div><button class="btn">Deliver reply</button> <span class="small muted">The agent reads it, then the same controls as the Approve button apply.</span></div>
+        </form></details>
+      {% endif %}
     </div>
 
     {# ---------- audit ---------- #}

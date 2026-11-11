@@ -1,6 +1,6 @@
 """Case storage and an append-only audit log (JSON files, so they are easy to inspect)."""
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -10,8 +10,29 @@ AUDIT = STATE / "audit.jsonl"
 OUTBOX = ROOT / "outbox"
 
 
+CLOCK = STATE / "clock.json"
+
+
+def clock_offset_days():
+    """Demo clock: lets you move time forward to see reminders and escalations. 0 = real time."""
+    return json.loads(CLOCK.read_text())["offset_days"] if CLOCK.exists() else 0
+
+
+def advance_clock(days=1):
+    STATE.mkdir(parents=True, exist_ok=True)
+    CLOCK.write_text(json.dumps({"offset_days": clock_offset_days() + days}))
+
+
+def now_dt():
+    return datetime.now(timezone.utc) + timedelta(days=clock_offset_days())
+
+
 def now():
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return now_dt().isoformat(timespec="seconds")
+
+
+def days_since(iso):
+    return (now_dt() - datetime.fromisoformat(iso)).total_seconds() / 86400
 
 
 def audit(case_id, actor, action, detail="", data=None):

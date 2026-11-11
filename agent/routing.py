@@ -1,15 +1,5 @@
 """Approval routing driven by config/policy.json, with segregation of duties and delegation."""
-from datetime import datetime, timezone
-
 from . import master as M, store
-
-
-def overdue(step):
-    """True when a pending step has waited longer than the escalation SLA."""
-    if step["status"] != "pending" or not step.get("assigned_at"):
-        return False
-    waited = datetime.now(timezone.utc) - datetime.fromisoformat(step["assigned_at"])
-    return waited.days >= M.policy()["escalation"]["sla_days"]
 
 
 def _conditions(case, steps_so_far):
@@ -105,11 +95,14 @@ def build_steps(case, vendor, po, previous_steps=()):
                       "assignee": uid, "why": why, "status": "pending", "decided_by": None, "decided_at": None,
                       "comment": None, "assigned_at": store.now()})
 
-    # Keep decisions (and waiting time) already recorded on identical steps, e.g. after AP corrections.
+    # Keep decisions, waiting time and escalations already recorded on the same step, e.g. after AP corrections.
     for s in steps:
-        prev = next((p for p in previous_steps if p["rule"] == s["rule"] and p["assignee"] == s["assignee"]), None)
+        prev = next((p for p in previous_steps if p["rule"] == s["rule"]
+                     and (p["assignee"] == s["assignee"] or p.get("escalated_from") == s["assignee"])), None)
         if prev:
             s["assigned_at"] = prev.get("assigned_at", s["assigned_at"])
+            if prev.get("escalated_from") == s["assignee"]:
+                s.update({k: prev[k] for k in ("assignee", "escalated_from", "why")})
             if prev["status"] == "approved":
                 s.update({k: prev[k] for k in ("status", "decided_by", "decided_at", "comment")})
     # A verify step, once created, stays until AP explicitly confirms it - fixing a field never skips it.

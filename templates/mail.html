@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_msg.html" import message %}
+{% block body %}
+<h1 style="margin-bottom:6px">Mail</h1>
+<p class="muted" style="margin-top:0">Approval emails the agent drafted or sent, and replies from approvers. This demo uses a mock mailbox; nothing leaves this computer.</p>
+<div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+  <div class="card"><h2>Needs AP ({{ todo|length }})</h2>
+    {% for m in todo %}{{ message(m, me, true) }}{% else %}<p class="small muted">Nothing waiting. Drafts to review and replies the agent could not act on appear here.</p>{% endfor %}
+  </div>
+  <div class="card"><h2>All messages</h2>
+    {% for m in msgs if m.status not in ('draft', 'needs_ap') %}{{ message(m, me, true) }}{% else %}<p class="small muted">No messages yet.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}

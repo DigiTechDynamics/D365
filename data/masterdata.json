@@ -1,63 +1,358 @@
 {
   "legal_entity": "USMF",
   "users": [
-    {"id": "pchen",   "name": "Priya Chen",     "role": "APSpecialist",      "approval_limit": 0},
-    {"id": "mlee",    "name": "Marcus Lee",     "role": "Buyer",             "approval_limit": 50000},
-    {"id": "rgarcia", "name": "Rosa Garcia",    "role": "Buyer",             "approval_limit": 50000},
-    {"id": "akhan",   "name": "Amir Khan",      "role": "FacilitiesManager", "approval_limit": 10000, "delegate_to": null},
-    {"id": "tnguyen", "name": "Thi Nguyen",     "role": "ITManager",         "approval_limit": 10000},
-    {"id": "lpatel",  "name": "Leena Patel",    "role": "ITDirector",        "approval_limit": 15000},
-    {"id": "dbrown",  "name": "Dan Brown",      "role": "ProjectManager",    "approval_limit": 25000, "out_of_office": true, "delegate_to": "jortiz"},
-    {"id": "jortiz",  "name": "Jorge Ortiz",    "role": "ProjectManager",    "approval_limit": 25000},
-    {"id": "sowusu",  "name": "Sam Owusu",      "role": "FinanceController", "approval_limit": 100000},
-    {"id": "eward",   "name": "Elena Ward",     "role": "CFO",               "approval_limit": 1000000},
-    {"id": "jsmith",  "name": "Jamie Smith",    "role": "VendorMasterAdmin", "approval_limit": 0}
+    {
+      "id": "pchen",
+      "name": "Priya Chen",
+      "role": "APSpecialist",
+      "approval_limit": 0,
+      "email": "pchen@contoso.example",
+      "manager": "sowusu"
+    },
+    {
+      "id": "mlee",
+      "name": "Marcus Lee",
+      "role": "Buyer",
+      "approval_limit": 50000,
+      "email": "mlee@contoso.example",
+      "manager": "sowusu"
+    },
+    {
+      "id": "rgarcia",
+      "name": "Rosa Garcia",
+      "role": "Buyer",
+      "approval_limit": 50000,
+      "email": "rgarcia@contoso.example",
+      "manager": "sowusu"
+    },
+    {
+      "id": "akhan",
+      "name": "Amir Khan",
+      "role": "FacilitiesManager",
+      "approval_limit": 10000,
+      "delegate_to": null,
+      "email": "akhan@contoso.example",
+      "manager": "sowusu"
+    },
+    {
+      "id": "tnguyen",
+      "name": "Thi Nguyen",
+      "role": "ITManager",
+      "approval_limit": 10000,
+      "email": "tnguyen@contoso.example",
+      "manager": "lpatel"
+    },
+    {
+      "id": "lpatel",
+      "name": "Leena Patel",
+      "role": "ITDirector",
+      "approval_limit": 15000,
+      "email": "lpatel@contoso.example",
+      "manager": "sowusu"
+    },
+    {
+      "id": "dbrown",
+      "name": "Dan Brown",
+      "role": "ProjectManager",
+      "approval_limit": 25000,
+      "out_of_office": true,
+      "delegate_to": "jortiz",
+      "email": "dbrown@contoso.example",
+      "manager": "sowusu"
+    },
+    {
+      "id": "jortiz",
+      "name": "Jorge Ortiz",
+      "role": "ProjectManager",
+      "approval_limit": 25000,
+      "email": "jortiz@contoso.example",
+      "manager": "sowusu"
+    },
+    {
+      "id": "sowusu",
+      "name": "Sam Owusu",
+      "role": "FinanceController",
+      "approval_limit": 100000,
+      "email": "sowusu@contoso.example",
+      "manager": "eward"
+    },
+    {
+      "id": "eward",
+      "name": "Elena Ward",
+      "role": "CFO",
+      "approval_limit": 1000000,
+      "email": "eward@contoso.example",
+      "manager": null
+    },
+    {
+      "id": "jsmith",
+      "name": "Jamie Smith",
+      "role": "VendorMasterAdmin",
+      "approval_limit": 0,
+      "email": "jsmith@contoso.example",
+      "manager": "sowusu"
+    }
   ],
   "vendors": [
-    {"account": "US-104", "email_domains": ["fabrikam-supply.example"], "name": "Fabrikam Industrial Supply", "tax_id": "91-4410276", "currency": "USD", "status": "active",
-     "tax_group": "WA-GOODS", "payment_terms_days": 30, "requested_by": "mlee", "created_by": "jsmith", "default_coding": null},
-    {"account": "US-118", "email_domains": ["proseware.example"], "name": "Proseware Packaging Co.", "tax_id": "84-2219034", "currency": "USD", "status": "active",
-     "tax_group": "WA-GOODS", "payment_terms_days": 30, "requested_by": null, "created_by": "jsmith", "default_coding": null},
-    {"account": "US-210", "email_domains": ["northwind-fs.example"], "name": "Northwind Facility Services", "tax_id": "47-8812350", "currency": "USD", "status": "active",
-     "tax_group": "SERV-EXEMPT", "payment_terms_days": 15, "requested_by": null, "created_by": "jsmith",
-     "default_coding": {"main_account": "618100", "CostCenter": "CC-210", "Department": "D-030", "BusinessUnit": "BU-001"}},
-    {"account": "US-305", "email_domains": ["adatum-consulting.example"], "name": "Adatum IT Consulting", "tax_id": "26-5530918", "currency": "USD", "status": "active",
-     "tax_group": "SERV-EXEMPT", "payment_terms_days": 30, "requested_by": "tnguyen", "created_by": "jsmith",
-     "default_coding": {"main_account": "605200", "CostCenter": "CC-410", "Department": "D-040", "BusinessUnit": "BU-001"}},
-    {"account": "US-412", "email_domains": ["litware-eng.example"], "name": "Litware Engineering Subcontractors", "tax_id": "33-7781204", "currency": "USD", "status": "active",
-     "tax_group": "SERV-EXEMPT", "payment_terms_days": 30, "requested_by": null, "created_by": "jsmith", "default_coding": null}
+    {
+      "account": "US-104",
+      "email_domains": [
+        "fabrikam-supply.example"
+      ],
+      "name": "Fabrikam Industrial Supply",
+      "tax_id": "91-4410276",
+      "currency": "USD",
+      "status": "active",
+      "tax_group": "WA-GOODS",
+      "payment_terms_days": 30,
+      "requested_by": "mlee",
+      "created_by": "jsmith",
+      "default_coding": null
+    },
+    {
+      "account": "US-118",
+      "email_domains": [
+        "proseware.example"
+      ],
+      "name": "Proseware Packaging Co.",
+      "tax_id": "84-2219034",
+      "currency": "USD",
+      "status": "active",
+      "tax_group": "WA-GOODS",
+      "payment_terms_days": 30,
+      "requested_by": null,
+      "created_by": "jsmith",
+      "default_coding": null
+    },
+    {
+      "account": "US-210",
+      "email_domains": [
+        "northwind-fs.example"
+      ],
+      "name": "Northwind Facility Services",
+      "tax_id": "47-8812350",
+      "currency": "USD",
+      "status": "active",
+      "tax_group": "SERV-EXEMPT",
+      "payment_terms_days": 15,
+      "requested_by": null,
+      "created_by": "jsmith",
+      "default_coding": {
+        "main_account": "618100",
+        "CostCenter": "CC-210",
+        "Department": "D-030",
+        "BusinessUnit": "BU-001"
+      }
+    },
+    {
+      "account": "US-305",
+      "email_domains": [
+        "adatum-consulting.example"
+      ],
+      "name": "Adatum IT Consulting",
+      "tax_id": "26-5530918",
+      "currency": "USD",
+      "status": "active",
+      "tax_group": "SERV-EXEMPT",
+      "payment_terms_days": 30,
+      "requested_by": "tnguyen",
+      "created_by": "jsmith",
+      "default_coding": {
+        "main_account": "605200",
+        "CostCenter": "CC-410",
+        "Department": "D-040",
+        "BusinessUnit": "BU-001"
+      }
+    },
+    {
+      "account": "US-412",
+      "email_domains": [
+        "litware-eng.example"
+      ],
+      "name": "Litware Engineering Subcontractors",
+      "tax_id": "33-7781204",
+      "currency": "USD",
+      "status": "active",
+      "tax_group": "SERV-EXEMPT",
+      "payment_terms_days": 30,
+      "requested_by": null,
+      "created_by": "jsmith",
+      "default_coding": null
+    }
   ],
   "purchase_orders": [
-    {"po": "00001942", "vendor": "US-104", "currency": "USD", "status": "open", "buyer": "mlee",
-     "lines": [
-       {"line": 1, "item": "M0021", "description": "Pallet racking kit - M2",  "qty": 40,  "received_qty": 40,  "unit_price": 185.00, "category": "WAREHOUSE-EQUIP", "CostCenter": "CC-520", "Department": "D-050", "BusinessUnit": "BU-001"},
-       {"line": 2, "item": "M0034", "description": "Steel shelf panels",       "qty": 120, "received_qty": 120, "unit_price": 22.50,  "category": "WAREHOUSE-EQUIP", "CostCenter": "CC-520", "Department": "D-050", "BusinessUnit": "BU-001"},
-       {"line": 3, "item": "M0040", "description": "Mounting hardware set",    "qty": 40,  "received_qty": 40,  "unit_price": 14.75,  "category": "WAREHOUSE-EQUIP", "CostCenter": "CC-520", "Department": "D-050", "BusinessUnit": "BU-001"}
-     ]},
-    {"po": "00001977", "vendor": "US-118", "currency": "USD", "status": "open", "buyer": "rgarcia",
-     "lines": [
-       {"line": 1, "item": "P-1001", "description": "Corrugated shipping boxes 18x12x12", "qty": 2000, "received_qty": 2000, "unit_price": 0.85,  "category": "PACKAGING", "CostCenter": "CC-520", "Department": "D-050", "BusinessUnit": "BU-001"},
-       {"line": 2, "item": "P-1002", "description": "Stretch pallet wrap 18in",           "qty": 50,   "received_qty": 50,   "unit_price": 19.00, "category": "PACKAGING", "CostCenter": "CC-520", "Department": "D-050", "BusinessUnit": "BU-001"}
-     ]}
+    {
+      "po": "00001942",
+      "vendor": "US-104",
+      "currency": "USD",
+      "status": "open",
+      "buyer": "mlee",
+      "lines": [
+        {
+          "line": 1,
+          "item": "M0021",
+          "description": "Pallet racking kit - M2",
+          "qty": 40,
+          "received_qty": 40,
+          "unit_price": 185.0,
+          "category": "WAREHOUSE-EQUIP",
+          "CostCenter": "CC-520",
+          "Department": "D-050",
+          "BusinessUnit": "BU-001"
+        },
+        {
+          "line": 2,
+          "item": "M0034",
+          "description": "Steel shelf panels",
+          "qty": 120,
+          "received_qty": 120,
+          "unit_price": 22.5,
+          "category": "WAREHOUSE-EQUIP",
+          "CostCenter": "CC-520",
+          "Department": "D-050",
+          "BusinessUnit": "BU-001"
+        },
+        {
+          "line": 3,
+          "item": "M0040",
+          "description": "Mounting hardware set",
+          "qty": 40,
+          "received_qty": 40,
+          "unit_price": 14.75,
+          "category": "WAREHOUSE-EQUIP",
+          "CostCenter": "CC-520",
+          "Department": "D-050",
+          "BusinessUnit": "BU-001"
+        }
+      ]
+    },
+    {
+      "po": "00001977",
+      "vendor": "US-118",
+      "currency": "USD",
+      "status": "open",
+      "buyer": "rgarcia",
+      "lines": [
+        {
+          "line": 1,
+          "item": "P-1001",
+          "description": "Corrugated shipping boxes 18x12x12",
+          "qty": 2000,
+          "received_qty": 2000,
+          "unit_price": 0.85,
+          "category": "PACKAGING",
+          "CostCenter": "CC-520",
+          "Department": "D-050",
+          "BusinessUnit": "BU-001"
+        },
+        {
+          "line": 2,
+          "item": "P-1002",
+          "description": "Stretch pallet wrap 18in",
+          "qty": 50,
+          "received_qty": 50,
+          "unit_price": 19.0,
+          "category": "PACKAGING",
+          "CostCenter": "CC-520",
+          "Department": "D-050",
+          "BusinessUnit": "BU-001"
+        }
+      ]
+    }
   ],
   "procurement_categories": {
-    "WAREHOUSE-EQUIP": {"main_account": "140200", "account_kind": "inventory", "item_tax_group": "TAXABLE"},
-    "PACKAGING":       {"main_account": "140300", "account_kind": "inventory", "item_tax_group": "TAXABLE"}
+    "WAREHOUSE-EQUIP": {
+      "main_account": "140200",
+      "account_kind": "inventory",
+      "item_tax_group": "TAXABLE"
+    },
+    "PACKAGING": {
+      "main_account": "140300",
+      "account_kind": "inventory",
+      "item_tax_group": "TAXABLE"
+    }
   },
   "charge_codes": {
-    "FREIGHT":   {"keywords": ["freight", "shipping", "delivery", "handling"], "treatment": "capitalize", "expense_account": "618500", "item_tax_group": "EXEMPT"},
-    "FUEL":      {"keywords": ["fuel surcharge"], "treatment": "capitalize", "expense_account": "618500", "item_tax_group": "EXEMPT"},
-    "RESTOCK":   {"keywords": ["restocking"], "treatment": "expense", "expense_account": "618900", "item_tax_group": "TAXABLE"}
+    "FREIGHT": {
+      "keywords": [
+        "freight",
+        "shipping",
+        "delivery",
+        "handling"
+      ],
+      "treatment": "capitalize",
+      "expense_account": "618500",
+      "item_tax_group": "EXEMPT"
+    },
+    "FUEL": {
+      "keywords": [
+        "fuel surcharge"
+      ],
+      "treatment": "capitalize",
+      "expense_account": "618500",
+      "item_tax_group": "EXEMPT"
+    },
+    "RESTOCK": {
+      "keywords": [
+        "restocking"
+      ],
+      "treatment": "expense",
+      "expense_account": "618900",
+      "item_tax_group": "TAXABLE"
+    }
   },
   "coding_keywords": [
-    {"keywords": ["travel", "mileage", "airfare", "hotel", "per diem"], "main_account": "607100", "project_category": "Travel"},
-    {"keywords": ["supplies", "consumables"], "main_account": "618200", "project_category": "Materials"},
-    {"keywords": ["rental", "equipment hire"], "main_account": "620700", "project_category": "Equipment"},
-    {"keywords": ["hours", "labor", "labour", "engineering", "consulting", "services"], "main_account": null, "project_category": "Subcontract labor"}
+    {
+      "keywords": [
+        "travel",
+        "mileage",
+        "airfare",
+        "hotel",
+        "per diem"
+      ],
+      "main_account": "607100",
+      "project_category": "Travel"
+    },
+    {
+      "keywords": [
+        "supplies",
+        "consumables"
+      ],
+      "main_account": "618200",
+      "project_category": "Materials"
+    },
+    {
+      "keywords": [
+        "rental",
+        "equipment hire"
+      ],
+      "main_account": "620700",
+      "project_category": "Equipment"
+    },
+    {
+      "keywords": [
+        "hours",
+        "labor",
+        "labour",
+        "engineering",
+        "consulting",
+        "services"
+      ],
+      "main_account": null,
+      "project_category": "Subcontract labor"
+    }
   ],
   "tax_groups": {
-    "WA-GOODS":    {"rate_pct": 9.0, "applies_to": ["TAXABLE"]},
-    "SERV-EXEMPT": {"rate_pct": 0.0, "applies_to": []}
+    "WA-GOODS": {
+      "rate_pct": 9.0,
+      "applies_to": [
+        "TAXABLE"
+      ]
+    },
+    "SERV-EXEMPT": {
+      "rate_pct": 0.0,
+      "applies_to": []
+    }
   },
   "main_accounts": {
     "140200": "Inventory - warehouse equipment",
@@ -74,25 +369,102 @@
     "222100": "Sales tax payable / receivable"
   },
   "dimensions": {
-    "CostCenter":   {"CC-210": {"name": "Facilities", "owner": "akhan", "active": true},
-                     "CC-410": {"name": "IT", "owner": "tnguyen", "deputy": "lpatel", "active": true},
-                     "CC-520": {"name": "Warehouse", "owner": "mlee", "active": true},
-                     "CC-999": {"name": "Legacy - closed", "owner": "sowusu", "active": false}},
-    "Department":   {"D-030": {"name": "Operations"}, "D-040": {"name": "Technology"}, "D-050": {"name": "Distribution"}, "D-060": {"name": "Engineering"}},
-    "BusinessUnit": {"BU-001": {"name": "US Manufacturing"}}
+    "CostCenter": {
+      "CC-210": {
+        "name": "Facilities",
+        "owner": "akhan",
+        "active": true
+      },
+      "CC-410": {
+        "name": "IT",
+        "owner": "tnguyen",
+        "deputy": "lpatel",
+        "active": true
+      },
+      "CC-520": {
+        "name": "Warehouse",
+        "owner": "mlee",
+        "active": true
+      },
+      "CC-999": {
+        "name": "Legacy - closed",
+        "owner": "sowusu",
+        "active": false
+      }
+    },
+    "Department": {
+      "D-030": {
+        "name": "Operations"
+      },
+      "D-040": {
+        "name": "Technology"
+      },
+      "D-050": {
+        "name": "Distribution"
+      },
+      "D-060": {
+        "name": "Engineering"
+      }
+    },
+    "BusinessUnit": {
+      "BU-001": {
+        "name": "US Manufacturing"
+      }
+    }
   },
   "projects": {
-    "PRJ-00045": {"name": "Plant 2 expansion", "status": "in_process", "manager": "dbrown", "CostCenter": "CC-520", "Department": "D-060", "BusinessUnit": "BU-001",
-                  "main_account": "620500"},
-    "PRJ-00031": {"name": "ERP cutover 2025", "status": "finished", "manager": "tnguyen", "CostCenter": "CC-410", "Department": "D-040", "BusinessUnit": "BU-001",
-                  "main_account": "620500"}
+    "PRJ-00045": {
+      "name": "Plant 2 expansion",
+      "status": "in_process",
+      "manager": "dbrown",
+      "CostCenter": "CC-520",
+      "Department": "D-060",
+      "BusinessUnit": "BU-001",
+      "main_account": "620500"
+    },
+    "PRJ-00031": {
+      "name": "ERP cutover 2025",
+      "status": "finished",
+      "manager": "tnguyen",
+      "CostCenter": "CC-410",
+      "Department": "D-040",
+      "BusinessUnit": "BU-001",
+      "main_account": "620500"
+    }
   },
   "posted_invoices": [
-    {"vendor": "US-210", "invoice_number": "NW-2026-1088", "date": "2026-10-03", "total": 3380.00, "voucher": "APINV-0009412",
-     "coding": {"main_account": "618100", "CostCenter": "CC-210"}},
-    {"vendor": "US-210", "invoice_number": "NW-2026-0974", "date": "2026-09-02", "total": 3380.00, "voucher": "APINV-0009101",
-     "coding": {"main_account": "618100", "CostCenter": "CC-210"}},
-    {"vendor": "US-412", "invoice_number": "LIT-0877", "date": "2026-09-30", "total": 14200.00, "voucher": "APINV-0009388",
-     "coding": {"main_account": "620500", "Project": "PRJ-00045"}}
+    {
+      "vendor": "US-210",
+      "invoice_number": "NW-2026-1088",
+      "date": "2026-10-03",
+      "total": 3380.0,
+      "voucher": "APINV-0009412",
+      "coding": {
+        "main_account": "618100",
+        "CostCenter": "CC-210"
+      }
+    },
+    {
+      "vendor": "US-210",
+      "invoice_number": "NW-2026-0974",
+      "date": "2026-09-02",
+      "total": 3380.0,
+      "voucher": "APINV-0009101",
+      "coding": {
+        "main_account": "618100",
+        "CostCenter": "CC-210"
+      }
+    },
+    {
+      "vendor": "US-412",
+      "invoice_number": "LIT-0877",
+      "date": "2026-09-30",
+      "total": 14200.0,
+      "voucher": "APINV-0009388",
+      "coding": {
+        "main_account": "620500",
+        "Project": "PRJ-00045"
+      }
+    }
   ]
 }

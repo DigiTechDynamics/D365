@@ -19,6 +19,7 @@ AI reads the document; matching, coding, approvals and audit are deterministic c
 | Validate | Sender domain registered for the vendor, emails asking to change bank details (AP must clear with a recorded call-back), duplicates, vendor status, totals, currency, dates vs payment terms, PO status, project status, required/active dimensions, tax vs tax setup, balanced entry | `agent/validation.py` |
 | Route | Approval rules from policy: AP verification, PO buyer, cost center owner, project manager, limit escalation, CFO. Segregation of duties, delegation (out of office), SLA escalation flag. | `agent/routing.py` |
 | Approve | Only the assigned person can act; approval limits enforced; corrections and coding changes logged | `agent/pipeline.py` |
+| Chase | The agent drafts an approval request for each approver; **AP reviews and sends it**. Reminder after 3 days, escalation up the manager chain after 5 (skipping anyone already in the route or blocked by SoD). Approvers can reply by email: the reply is read (Claude in live mode, keyword rules in demo), and only counts if it comes from the current approver's address and clearly approves or rejects - then the same limit and SoD checks apply. Questions and unclear replies go to AP. | `agent/chasing.py`, `agent/mail.py` |
 | Transfer | Pending vendor invoice (PO) or invoice journal (overhead/project), with the invoice image attached by hash | `agent/pipeline.py` |
 | Audit | Append-only log of every agent and human action | `state/audit.jsonl` |
 
@@ -49,6 +50,13 @@ python app.py                    # http://127.0.0.1:5000
 ```
 
 Click **Check sources & process**, then use **Acting as** (top right) to switch between AP, buyers, managers and the controller. **Reset demo** clears everything so the demo mailbox and folder are read again.
+
+To see approval chasing: open **Mail**, review and send the drafted requests, then on an invoice page use
+*Demo: simulate an email reply* (try "Approved", "Why is travel included?", or a reply from the wrong person).
+Use **+1 day** in the top bar to move the demo clock and watch reminders (day 3) and escalations (day 5).
+
+> Email approval is convenient but weaker than an authenticated approval (D365 workflow, Teams Approvals).
+> In production, prefer those, or require the reply to come through your mail system's sender authentication.
 
 - **Demo mode (no API key):** the bundled samples use reference extractions in `data/demo_extractions/`, so you can run everything offline.
 - **Live mode:** set `ANTHROPIC_API_KEY` (or sign in with `ant auth login` and set `INVOICE_AGENT_LIVE=1`). Any invoice PDF that arrives is read by Claude. The model is set in `config/policy.json`.

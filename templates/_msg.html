@@ -1,0 +1,36 @@
+{% macro message(m, me, show_case=false) %}
+{% set kind_label = {'request':'Approval request','reminder':'Reminder','escalation':'Escalation','reply':'Reply'}[m.kind] %}
+{% set chip = {'draft':'warn','sent':'info','received':'info','processed':'ok','needs_ap':'bad','discarded':''}[m.status] %}
+<div style="border:1px solid var(--line);border-radius:4px;padding:10px 12px;margin-bottom:10px;background:{{ '#fffbea' if m.status == 'draft' else ('#fdf3f4' if m.status == 'needs_ap' else '#fff') }}">
+  <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+    <b>{{ '&larr;'|safe if m.direction == 'in' else '&rarr;'|safe }} {{ kind_label }}</b>
+    <span class="chip {{ chip }}">{{ {'needs_ap':'AP to follow up'}.get(m.status, m.status|capitalize) }}</span>
+    {% if show_case %}<a href="{{ url_for('case', cid=m.case) }}#mail" class="small">{{ m.case }}</a>{% endif %}
+    <span class="small muted" style="margin-left:auto">{{ m.id }} &middot; {{ (m.sent_at or m.created_at)[:16]|replace('T',' ') }}</span>
+  </div>
+  <div class="small muted">{{ 'From ' ~ m.sender if m.direction == 'in' else 'To ' ~ m.to }}{% if m.sent_by %} &middot; sent by {{ m.sent_by }}{% endif %}</div>
+  {% if m.status == 'draft' and me.role == 'APSpecialist' %}
+    <form method="post" action="{{ url_for('mail_send', mid=m.id) }}" style="display:grid;gap:6px;margin-top:8px">
+      <input type="text" name="subject" value="{{ m.subject }}">
+      <textarea name="body" rows="14" style="font-family:Consolas,monospace;font-size:12px">{{ m.body }}</textarea>
+      <div style="display:flex;gap:8px"><button class="btn primary">Send</button>
+        <button class="btn" formaction="{{ url_for('mail_discard', mid=m.id) }}">Discard</button>
+        <span class="small muted" style="align-self:center">Drafted by the agent. Nothing is sent until AP reviews it.</span></div>
+    </form>
+  {% else %}
+    <div class="small" style="margin-top:4px"><b>{{ m.subject }}</b></div>
+    <details><summary class="small" style="cursor:pointer;color:var(--brand)">Message</summary>
+      <pre class="small" style="white-space:pre-wrap;background:#faf9f8;border:1px solid var(--line);padding:8px;margin:6px 0 0">{{ m.body }}</pre></details>
+    {% if m.status == 'draft' %}<div class="small muted">Waiting for AP to review and send.</div>{% endif %}
+  {% endif %}
+  {% if m.interpretation %}
+    <div class="small" style="margin-top:6px"><b>Agent read this as:</b> {{ m.interpretation.decision }} ({{ (m.interpretation.confidence*100)|round|int }}% &middot; {{ m.interpretation.method }})</div>
+  {% endif %}
+  {% if m.outcome %}<div class="small"><b>Outcome:</b> {{ m.outcome }}</div>{% endif %}
+  {% if m.status == 'needs_ap' and me.role == 'APSpecialist' %}
+    <form method="post" action="{{ url_for('mail_close', mid=m.id) }}" style="display:flex;gap:6px;margin-top:6px">
+      <input type="text" name="note" placeholder="What you did, e.g. called approver, answered question" required>
+      <button class="btn">Close follow-up</button></form>
+  {% endif %}
+</div>
+{% endmacro %}

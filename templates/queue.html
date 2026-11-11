@@ -38,7 +38,7 @@
     <td>{{ {'po':'PO invoice','cost':'Overhead (no PO)','project':'Project'}[c.invoice_type] }}</td>
     <td class="r">{{ c.header.total|money }}</td>
     <td><span class="chip {{ status_chip[c.status] }}">{{ c.status|capitalize }}</span>{% if c.touchless %} <span class="chip ok">Touchless</span>{% endif %}</td>
-    <td>{% if step %}{{ user_name(step.assignee) }}<div class="small muted">{{ step.kind }}</div>{% if c.id in overdue %}<div class="small" style="color:var(--bad)">Over {{ sla }}-day SLA: escalate to {{ overdue[c.id] }}</div>{% endif %}{% else %}<span class="muted">-</span>{% endif %}</td>
+    <td>{% if step %}{{ user_name(step.assignee) }}<div class="small muted">{{ step.kind }}</div>{% if chase[c.id] %}<div class="small"><span class="chip {{ chase[c.id][0] }}" style="font-weight:400">{{ chase[c.id][1] }}</span></div>{% endif %}{% else %}<span class="muted">-</span>{% endif %}</td>
     <td class="small">{% if issue %}<span class="dot {{ issue.status }}"></span>{{ issue.detail }}{% else %}<span class="dot pass"></span>All checks passed{% endif %}</td>
   </tr>
   {% else %}

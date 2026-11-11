@@ -11,7 +11,15 @@
       </table></div>
     <div class="card"><h2>Segregation of duties</h2>
       <table>{% for k, v in p.segregation_of_duties.items() %}<tr><td class="small">{{ k|replace('_',' ') }}</td><td class="small"><b>{{ 'On' if v else 'Off' }}</b></td></tr>{% endfor %}
-      <tr><td class="small">SLA before escalation</td><td class="small"><b>{{ p.escalation.sla_days }} days &rarr; {{ p.escalation.escalate_to }}</b></td></tr></table></div>
+      </table></div>
+    <div class="card"><h2>Approval chasing</h2>
+      <table>
+        <tr><td class="small">Reminder to approver</td><td class="small"><b>after {{ p.approval_chasing.reminder_after_days }} days</b> without a response</td></tr>
+        <tr><td class="small">Escalate to approver's manager</td><td class="small"><b>after {{ p.approval_chasing.escalate_after_days }} days</b> (skips anyone already in the route or blocked by SoD)</td></tr>
+        <tr><td class="small">AP reviews before sending</td><td class="small"><b>{{ p.approval_chasing.review_before_sending|join(', ') }}</b></td></tr>
+        <tr><td class="small">Sent automatically</td><td class="small"><b>{{ p.approval_chasing.auto_send|join(', ') }}</b></td></tr>
+        <tr><td class="small">Email reply accepted when</td><td class="small">from the current approver's address, clearly approve/reject, confidence &ge; <b>{{ (p.approval_chasing.reply_min_confidence*100)|int }}%</b>; then approval limit and SoD checks apply</td></tr>
+      </table></div>
   </div>
   <div>
     <div class="card"><h2>Matching and extraction</h2>

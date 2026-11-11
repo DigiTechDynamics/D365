@@ -4,10 +4,10 @@ import shutil
 
 from flask import Flask, abort, flash, redirect, render_template, request, send_from_directory, session, url_for
 
-from agent import intake, master as M, pipeline, routing, sources, store
-from agent.validation import ACKNOWLEDGEABLE
+from agent import chasing, intake, mail, master as M, pipeline, sources, store
 from agent.extract import credentials_available
 from agent.models import HEADER_FIELDS
+from agent.validation import ACKNOWLEDGEABLE
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
@@ -29,11 +29,22 @@ def money(v):
 def globals_():
     uid = session.get("user", "pchen")
     return {"me": M.user(uid), "users": M.md()["users"], "status_chip": STATUS_CHIP, "labels": FIELD_LABELS,
-            "live": credentials_available(), "user_name": lambda u: (M.user(u) or {"name": u})["name"]}
+            "live": credentials_available(), "user_name": lambda u: (M.user(u) or {"name": u})["name"],
+            "clock_days": store.clock_offset_days(), "today": store.now()[:10],
+            "ap_mail_count": len(chasing.needs_ap())}
 
 
 def me():
     return session.get("user", "pchen")
+
+
+def _guard(fn):
+    """Run a user action; show control violations as messages; then let the agent do its follow-ups."""
+    try:
+        fn()
+    except pipeline.NotAllowed as e:
+        flash(str(e), "bad")
+    chasing.run()
 
 
 @app.post("/act-as")
@@ -46,20 +57,16 @@ def act_as():
 @app.get("/")
 def queue():
     cases = store.all_cases()
-    esc = M.policy()["escalation"]["escalate_to"]
-    target = M.users_with_role(esc.split(":", 1)[1])[0]["name"] if esc.startswith("role:") else esc
-    overdue = {c["id"]: target for c in cases
-               if (s := pipeline.current_step(c)) and routing.overdue(s)}
     runs = intake.registry()["runs"]
-    return render_template("queue.html", cases=cases, k=pipeline.kpis(), overdue=overdue,
-                           sla=M.policy()["escalation"]["sla_days"], sources=sources.config()["sources"],
-                           last_run=runs[-1] if runs else None)
+    return render_template("queue.html", cases=cases, k=pipeline.kpis(), sources=sources.config()["sources"],
+                           last_run=runs[-1] if runs else None, chase={c["id"]: chasing.status(c) for c in cases})
 
 
 @app.post("/process")
 def process():
     try:
         summary, created = pipeline.run_all()
+        chasing.run()
         flash(f"Checked sources: {len(summary['accepted'])} file(s) received, {len(summary['rejected'])} rejected. "
               f"Read {len(created)} new invoice(s).", "ok")
         for err in summary["errors"]:
@@ -69,6 +76,14 @@ def process():
     return redirect(url_for("queue"))
 
 
+@app.post("/clock")
+def clock():
+    store.advance_clock(int(request.form.get("days", 1)))
+    chasing.run()
+    flash(f"Demo clock moved forward. Today is now {store.now()[:10]}; reminders and escalations were checked.", "ok")
+    return redirect(request.referrer or url_for("queue"))
+
+
 @app.post("/reset")
 def reset():
     shutil.rmtree(store.STATE, ignore_errors=True)
@@ -76,14 +91,8 @@ def reset():
     for f in pipeline.INBOX.glob("*"):
         if f.is_file() and f.name != ".gitkeep":
             f.unlink()
-    flash("Demo reset: cases, audit log, outbox and inbox cleared. The demo mailbox and SharePoint folder will be read again.", "ok")
+    flash("Demo reset: cases, mail, audit log, clock, outbox and inbox cleared.", "ok")
     return redirect(url_for("queue"))
-
-
-@app.post("/case/<cid>/clear-check")
-def clear_check(cid):
-    _guard(lambda: pipeline.acknowledge_check(cid, me(), request.form["check"], request.form.get("note", "")))
-    return redirect(url_for("case", cid=cid))
 
 
 @app.get("/case/<cid>")
@@ -103,14 +112,14 @@ def case(cid):
         accounts=data["main_accounts"], dims=data["dimensions"], projects=data["projects"],
         lines=c["extraction"]["lines"], match_by_line={m["invoice_line"]: m for m in c["matches"]},
         ackable=ACKNOWLEDGEABLE, src=c.get("source") or {"channel": "manual"},
+        messages=mail.all_messages(cid), approver=M.user(step["assignee"]) if step else None,
     )
 
 
-def _guard(fn):
-    try:
-        fn()
-    except pipeline.NotAllowed as e:
-        flash(str(e), "bad")
+@app.post("/case/<cid>/clear-check")
+def clear_check(cid):
+    _guard(lambda: pipeline.acknowledge_check(cid, me(), request.form["check"], request.form.get("note", "")))
+    return redirect(url_for("case", cid=cid))
 
 
 @app.post("/case/<cid>/verify")
@@ -137,6 +146,38 @@ def decide(cid):
 def transfer(cid):
     _guard(lambda: pipeline.transfer(cid, me()))
     return redirect(url_for("case", cid=cid))
+
+
+@app.post("/case/<cid>/reply")
+def reply(cid):
+    """Demo only: type the approver's email reply as if it had arrived in the AP mailbox."""
+    _guard(lambda: chasing.receive_reply(cid, request.form["sender"], request.form["body"]))
+    return redirect(url_for("case", cid=cid) + "#mail")
+
+
+@app.post("/mail/<mid>/send")
+def mail_send(mid):
+    m = mail.get(mid)
+    _guard(lambda: chasing.send_draft(mid, me(), request.form.get("subject"), request.form.get("body")))
+    return redirect(request.referrer or url_for("case", cid=m["case"]))
+
+
+@app.post("/mail/<mid>/discard")
+def mail_discard(mid):
+    _guard(lambda: chasing.discard_draft(mid, me()))
+    return redirect(request.referrer or url_for("mailbox"))
+
+
+@app.post("/mail/<mid>/close")
+def mail_close(mid):
+    _guard(lambda: chasing.resolve_followup(mid, me(), request.form.get("note", "")))
+    return redirect(request.referrer or url_for("mailbox"))
+
+
+@app.get("/mail")
+def mailbox():
+    msgs = list(reversed(mail.all_messages()))
+    return render_template("mail.html", msgs=msgs, todo=[m for m in msgs if m["status"] in ("draft", "needs_ap")])
 
 
 @app.get("/pdf/<path:name>")
