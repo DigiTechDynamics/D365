@@ -1,0 +1,85 @@
+{
+  "vendor_name": {
+    "value": "Fabrikam Industrial Supply",
+    "confidence": 0.99
+  },
+  "vendor_tax_id": {
+    "value": "91-4410276",
+    "confidence": 0.97
+  },
+  "invoice_number": {
+    "value": "FIS-77821",
+    "confidence": 0.99
+  },
+  "invoice_date": {
+    "value": "2026-10-28",
+    "confidence": 0.98
+  },
+  "due_date": {
+    "value": "2026-11-27",
+    "confidence": 0.96
+  },
+  "currency": {
+    "value": "USD",
+    "confidence": 0.99
+  },
+  "po_number": {
+    "value": "00001942",
+    "confidence": 0.97
+  },
+  "project_reference": {
+    "value": null,
+    "confidence": 0.95
+  },
+  "subtotal": {
+    "value": 11330.0,
+    "confidence": 0.98
+  },
+  "tax_amount": {
+    "value": 962.1,
+    "confidence": 0.97
+  },
+  "total": {
+    "value": 12292.1,
+    "confidence": 0.99
+  },
+  "lines": [
+    {
+      "item_code": "M0021",
+      "description": "Pallet racking kit - M2",
+      "quantity": 40,
+      "unit_price": 185.0,
+      "amount": 7400.0,
+      "is_charge": false,
+      "confidence": 0.97
+    },
+    {
+      "item_code": "M0034",
+      "description": "Steel shelf panels",
+      "quantity": 120,
+      "unit_price": 22.5,
+      "amount": 2700.0,
+      "is_charge": false,
+      "confidence": 0.97
+    },
+    {
+      "item_code": "M0040",
+      "description": "Mounting hardware set",
+      "quantity": 40,
+      "unit_price": 14.75,
+      "amount": 590.0,
+      "is_charge": false,
+      "confidence": 0.97
+    },
+    {
+      "item_code": null,
+      "description": "Freight & handling",
+      "quantity": 1,
+      "unit_price": 640.0,
+      "amount": 640.0,
+      "is_charge": true,
+      "confidence": 0.97
+    }
+  ],
+  "notes": null
+}

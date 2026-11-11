@@ -1,0 +1,5 @@
+state/
+outbox/
+__pycache__/
+.env
+.claude/

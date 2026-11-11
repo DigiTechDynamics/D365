@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block body %}
+<h1 style="margin-bottom:14px">Audit log</h1>
+<div class="card">
+  <p class="small muted" style="margin-top:0">Append-only record of every action by the agent (svc-ap-agent) and by people. Stored in <code>state/audit.jsonl</code>.</p>
+  <table>
+    <tr><th>Time (UTC)</th><th>Invoice</th><th>Actor</th><th>Action</th><th>Detail</th></tr>
+    {% for r in rows %}
+    <tr><td class="small muted">{{ r.ts[:19]|replace('T',' ') }}</td><td><a href="{{ url_for('case', cid=r.case) }}">{{ r.case }}</a></td>
+        <td class="small"><b>{{ r.actor }}</b> <span class="muted">({{ r.actor_type }})</span></td><td class="small"><b>{{ r.action }}</b></td><td class="small">{{ r.detail }}</td></tr>
+    {% else %}<tr><td colspan="5" class="muted">Nothing logged yet.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block body %}
+<h1 style="margin-bottom:6px">Policy &amp; controls</h1>
+<p class="muted" style="margin-top:0">Everything the agent decides comes from <code>config/policy.json</code>. Finance and internal audit can review and change it without touching code.</p>
+<div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+  <div>
+    <div class="card"><h2>Approval rules (evaluated in order)</h2>
+      <table><tr><th>Rule</th><th>When</th><th>Step</th></tr>
+      {% for r in p.approval_rules %}<tr><td><b>{{ r.id }}</b><div class="small muted">{{ r.description }}</div></td>
+        <td class="small">{% for k, v in r.when.items() %}{{ k }} = {{ v }}<br>{% endfor %}</td><td class="small">{{ r.step.kind }} &rarr; {{ r.step.resolver }}</td></tr>{% endfor %}
+      </table></div>
+    <div class="card"><h2>Segregation of duties</h2>
+      <table>{% for k, v in p.segregation_of_duties.items() %}<tr><td class="small">{{ k|replace('_',' ') }}</td><td class="small"><b>{{ 'On' if v else 'Off' }}</b></td></tr>{% endfor %}
+      <tr><td class="small">SLA before escalation</td><td class="small"><b>{{ p.escalation.sla_days }} days &rarr; {{ p.escalation.escalate_to }}</b></td></tr></table></div>
+  </div>
+  <div>
+    <div class="card"><h2>Matching and extraction</h2>
+      <table>
+        <tr><td class="small">Model</td><td class="small"><b>{{ p.model }}</b></td></tr>
+        <tr><td class="small">Confidence threshold</td><td class="small"><b>{{ (p.confidence_threshold*100)|int }}%</b></td></tr>
+        <tr><td class="small">Price tolerance</td><td class="small"><b>{{ p.price_tolerance_pct }}%</b></td></tr>
+        <tr><td class="small">Quantity tolerance (vs received)</td><td class="small"><b>{{ p.qty_tolerance_pct }}%</b></td></tr>
+        <tr><td class="small">Touchless</td><td class="small"><b>{{ 'On' if p.touchless.enabled else 'Off' }}</b> for {{ p.touchless.invoice_types|join(', ') }} up to {{ p.touchless.max_amount|money }}; auto-transfer {{ 'on' if p.touchless.auto_transfer else 'off' }}</td></tr>
+        <tr><td class="small">Transfer targets</td><td class="small">{% for k, v in p.transfer_targets.items() %}{{ k }} &rarr; <b>{{ v }}</b><br>{% endfor %}</td></tr>
+      </table></div>
+    <div class="card"><h2>Dimension rules</h2>
+      <table>{% for d in p.dimension_rules %}<tr><td class="small">{{ d.description }}</td></tr>{% endfor %}</table></div>
+  </div>
+</div>
+{% endblock %}

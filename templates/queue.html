@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block body %}
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+  <h1>Captured invoices</h1>
+  <form method="post" action="{{ url_for('process') }}" style="margin-left:auto"><button class="btn primary">Process inbox ({{ inbox|length }} files)</button></form>
+  <form method="post" action="{{ url_for('reset') }}" onsubmit="return confirm('Clear all cases, audit log and outbox?')"><button class="btn">Reset demo</button></form>
+</div>
+<div class="kpis">
+  <div class="card kpi"><div class="k">Invoices captured</div><div class="n">{{ k.total }}</div></div>
+  <div class="card kpi"><div class="k">Touchless rate</div><div class="n">{{ k.touchless_pct if k.touchless_pct is not none else '-' }}{{ '%' if k.touchless_pct is not none }}</div></div>
+  <div class="card kpi"><div class="k">First-time-right postings</div><div class="n">{{ k.first_time_right_pct if k.first_time_right_pct is not none else '-' }}{{ '%' if k.first_time_right_pct is not none }}</div><div class="small muted">transferred with no corrections</div></div>
+  <div class="card kpi"><div class="k">Awaiting approval</div><div class="n">{{ k.awaiting }}</div></div>
+  <div class="card kpi"><div class="k">Blocked</div><div class="n" style="color:var(--bad)">{{ k.blocked }}</div></div>
+</div>
+<div class="card">
+<table>
+  <tr><th>Capture</th><th>Vendor</th><th>Invoice</th><th>Type</th><th class="r">Total</th><th>Status</th><th>Waiting on</th><th>Key check</th></tr>
+  {% for c in cases %}
+  {% set step = (c.steps|selectattr('status','equalto','pending')|list|first) if c.steps else none %}
+  {% set issue = (c.checks|selectattr('status','in',['fail','warn'])|list|first) %}
+  <tr>
+    <td><a href="{{ url_for('case', cid=c.id) }}"><b>{{ c.id }}</b></a></td>
+    <td>{{ c.header.vendor_name }}<div class="small muted">{{ c.vendor_account or 'not matched' }}</div></td>
+    <td>{{ c.header.invoice_number }}<div class="small muted">{{ c.header.invoice_date }}</div></td>
+    <td>{{ {'po':'PO invoice','cost':'Overhead (no PO)','project':'Project'}[c.invoice_type] }}</td>
+    <td class="r">{{ c.header.total|money }}</td>
+    <td><span class="chip {{ status_chip[c.status] }}">{{ c.status|capitalize }}</span>{% if c.touchless %} <span class="chip ok">Touchless</span>{% endif %}</td>
+    <td>{% if step %}{{ user_name(step.assignee) }}<div class="small muted">{{ step.kind }}</div>{% if c.id in overdue %}<div class="small" style="color:var(--bad)">Over {{ sla }}-day SLA: escalate to {{ overdue[c.id] }}</div>{% endif %}{% else %}<span class="muted">-</span>{% endif %}</td>
+    <td class="small">{% if issue %}<span class="dot {{ issue.status }}"></span>{{ issue.detail }}{% else %}<span class="dot pass"></span>All checks passed{% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="8" class="muted">No invoices yet. Click <b>Process inbox</b> to read the PDFs in the inbox folder.</td></tr>
+  {% endfor %}
+</table>
+</div>
+{% endblock %}

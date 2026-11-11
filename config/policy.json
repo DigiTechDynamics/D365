@@ -1,0 +1,54 @@
+{
+  "_comment": "Every control the agent applies lives here, so finance and audit can review and change it without touching code.",
+  "model": "claude-opus-5-5",
+  "confidence_threshold": 0.85,
+  "price_tolerance_pct": 2.0,
+  "qty_tolerance_pct": 0.0,
+  "total_tolerance": 0.02,
+  "tax_tolerance": 0.05,
+  "max_days_in_future": 0,
+
+  "touchless": {
+    "enabled": true,
+    "invoice_types": ["po"],
+    "max_amount": 25000,
+    "auto_transfer": true
+  },
+
+  "transfer_targets": {
+    "po": "PendingVendorInvoice",
+    "cost": "InvoiceJournal",
+    "project": "InvoiceJournal"
+  },
+
+  "approval_rules": [
+    {"id": "R01", "description": "Low-confidence fields or failed checks must be resolved by AP before anyone approves",
+     "when": {"needs_ap_review": true}, "step": {"kind": "verify", "resolver": "role:APSpecialist"}},
+    {"id": "R02", "description": "PO invoice with price or quantity variance goes to the PO buyer",
+     "when": {"invoice_type": ["po"], "has_variance": true}, "step": {"kind": "approve", "resolver": "po_buyer"}},
+    {"id": "R03", "description": "PO invoice above the touchless limit goes to the PO buyer",
+     "when": {"invoice_type": ["po"], "min_amount": 25000}, "step": {"kind": "approve", "resolver": "po_buyer"}},
+    {"id": "R04", "description": "Overhead (non-PO) invoice goes to the cost center owner",
+     "when": {"invoice_type": ["cost"]}, "step": {"kind": "approve", "resolver": "cost_center_owner"}},
+    {"id": "R05", "description": "Project invoice goes to the project manager",
+     "when": {"invoice_type": ["project"]}, "step": {"kind": "approve", "resolver": "project_manager"}},
+    {"id": "R06", "description": "Amount above the approver's limit escalates to the Finance Controller",
+     "when": {"exceeds_approver_limit": true}, "step": {"kind": "approve", "resolver": "role:FinanceController"}},
+    {"id": "R07", "description": "Any invoice above 50,000 also needs CFO approval",
+     "when": {"min_amount": 50000}, "step": {"kind": "approve", "resolver": "role:CFO"}}
+  ],
+
+  "segregation_of_duties": {
+    "vendor_requester_cannot_approve": true,
+    "vendor_creator_cannot_approve": true,
+    "one_person_one_step": true
+  },
+
+  "escalation": {"sla_days": 3, "escalate_to": "role:FinanceController"},
+
+  "dimension_rules": [
+    {"description": "Expense accounts (6xxxxx) require Cost Center and Department", "account_prefix": "6", "requires": ["CostCenter", "Department"]},
+    {"description": "Inventory accounts (14xxxx) require Cost Center", "account_prefix": "14", "requires": ["CostCenter"]},
+    {"description": "Project lines require an in-process project", "account_type": "Project", "requires": ["Project"]}
+  ]
+}

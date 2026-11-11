@@ -1,0 +1,67 @@
+{
+  "vendor_name": {
+    "value": "Proseware Packaging Co.",
+    "confidence": 0.99
+  },
+  "vendor_tax_id": {
+    "value": "84-2219034",
+    "confidence": 0.97
+  },
+  "invoice_number": {
+    "value": "PW-5530",
+    "confidence": 0.99
+  },
+  "invoice_date": {
+    "value": "2026-11-02",
+    "confidence": 0.98
+  },
+  "due_date": {
+    "value": "2026-12-02",
+    "confidence": 0.96
+  },
+  "currency": {
+    "value": "USD",
+    "confidence": 0.99
+  },
+  "po_number": {
+    "value": "00001977",
+    "confidence": 0.97
+  },
+  "project_reference": {
+    "value": null,
+    "confidence": 0.95
+  },
+  "subtotal": {
+    "value": 2850.0,
+    "confidence": 0.98
+  },
+  "tax_amount": {
+    "value": 256.5,
+    "confidence": 0.97
+  },
+  "total": {
+    "value": 3106.5,
+    "confidence": 0.99
+  },
+  "lines": [
+    {
+      "item_code": "P-1001",
+      "description": "Corrugated shipping boxes 18x12x12",
+      "quantity": 2000,
+      "unit_price": 0.95,
+      "amount": 1900.0,
+      "is_charge": false,
+      "confidence": 0.97
+    },
+    {
+      "item_code": "P-1002",
+      "description": "Stretch pallet wrap 18in",
+      "quantity": 50,
+      "unit_price": 19.0,
+      "amount": 950.0,
+      "is_charge": false,
+      "confidence": 0.97
+    }
+  ],
+  "notes": null
+}

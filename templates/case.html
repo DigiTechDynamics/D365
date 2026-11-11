@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}{{ c.id }} - AP Invoice Agent{% endblock %}
+{% block body %}
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:6px">
+  <a href="{{ url_for('queue') }}" class="small">&larr; Captured invoices</a>
+</div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px">
+  <h1>{{ c.id }} &middot; {{ c.header.vendor_name }}</h1>
+  <span class="chip">{{ {'po':'PO invoice','cost':'Overhead (no PO)','project':'Project invoice'}[c.invoice_type] }}</span>
+  <span class="chip {{ status_chip[c.status] }}">{{ c.status|capitalize }}</span>
+  {% if c.touchless %}<span class="chip ok">Touchless</span>{% endif %}
+  <span class="small muted" style="margin-left:auto">{{ c.source_file }} &middot; read {{ 'by ' ~ c.extraction_meta.model if c.extraction_meta.mode == 'live' else 'from reference extraction (demo mode)' }}</span>
+</div>
+
+{# ---------- action bar: what the acting user may do now ---------- #}
+<div class="card" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+  {% if step %}
+    <div><b>Waiting on:</b> {{ user_name(step.assignee) }} &middot; {{ step.kind }} &middot; <span class="muted">{{ step.description }}</span></div>
+    {% if step.assignee == me.id %}
+      <form method="post" action="{{ url_for('decide', cid=c.id) }}" style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">
+        <input type="text" name="comment" placeholder="Comment (optional)" style="width:220px">
+        <button class="btn primary" name="decision" value="approve">{{ 'Confirm and send on' if step.kind == 'verify' else 'Approve' }}</button>
+        <button class="btn danger" name="decision" value="reject">Reject</button>
+      </form>
+    {% else %}
+      <span class="small muted" style="margin-left:auto">Switch "Acting as" to {{ user_name(step.assignee) }} to act on this step.</span>
+    {% endif %}
+  {% elif c.status == 'approved' %}
+    <div><b>Approved.</b> Ready to transfer to D365 as {{ 'a pending vendor invoice' if c.invoice_type == 'po' else 'an invoice journal' }}.</div>
+    <form method="post" action="{{ url_for('transfer', cid=c.id) }}" style="margin-left:auto"><button class="btn primary" {{ 'disabled' if me.role != 'APSpecialist' }}>Transfer to D365</button></form>
+  {% elif c.status == 'transferred' %}
+    <div><b>Transferred</b> as {{ c.transfer.target }} by {{ c.transfer.by }} &middot; payload <code>outbox/{{ c.transfer.file }}</code> &middot; invoice image attached to the header ({{ c.sha256[:12] }}&hellip;)</div>
+  {% elif c.status == 'blocked' %}
+    <div style="color:var(--bad)"><b>Blocked:</b> {% for ch in c.checks if ch.blocking and ch.status == 'fail' %}{{ ch.detail }}{% endfor %}</div>
+    <form method="post" action="{{ url_for('decide', cid=c.id) }}" style="margin-left:auto"><input type="hidden" name="comment" value="Rejected: blocked by validation">
+      <button class="btn danger" name="decision" value="reject" {{ 'disabled' if me.role != 'APSpecialist' }}>Reject invoice</button></form>
+  {% else %}
+    <div>{{ c.status|capitalize }}.</div>
+  {% endif %}
+</div>
+
+<div class="grid2" style="display:grid;grid-template-columns:minmax(380px,0.9fr) 1.4fr;gap:14px">
+  <div class="card" style="padding:10px">
+    <div class="small muted" style="margin-bottom:6px">{{ c.source_file }}</div>
+    <iframe src="{{ url_for('pdf', name=c.source_file) }}#navpanes=0&view=FitH" style="width:100%;height:880px;border:1px solid var(--line)"></iframe>
+  </div>
+
+  <div>
+    {# ---------- header ---------- #}
+    <div class="card">
+      <h2>Invoice header <span class="chip ok">Read by AI</span> {% if c.corrections %}<span class="chip warn">{{ c.corrections|length }} correction(s)</span>{% endif %}</h2>
+      <form method="post" action="{{ url_for('verify', cid=c.id) }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 16px">
+        {% for f in fields %}
+        {% set conf = c.confidence[f] %}{% set low = conf < threshold and f not in c.verified_fields %}
+        <div>
+          <div class="small muted">{{ labels[f] }}</div>
+          {% if can_fix and low %}
+            <input type="text" name="{{ f }}" value="{{ c.header[f] if c.header[f] is not none else '' }}" style="border-color:#c19c00;background:#fffbea">
+          {% else %}
+            <div style="border:1px solid {{ '#c19c00' if low else '#c8c6c4' }};background:{{ '#fffbea' if low else '#fff' }};border-radius:2px;padding:5px 8px;display:flex;justify-content:space-between">
+              <span>{{ (c.header[f]|money) if f in ['subtotal','tax_amount','total'] else (c.header[f] if c.header[f] is not none else '-') }}</span>
+          {% endif %}
+          {% if not (can_fix and low) %}
+              <span class="small" style="color:{{ 'var(--warn)' if low else 'var(--ok)' }};font-weight:600">{{ 'verified' if f in c.verified_fields else ('' if c.header[f] is none else (conf * 100)|round|int ~ '%') }}</span>
+            </div>
+          {% else %}<div class="small" style="color:var(--warn)">AI confidence {{ (conf*100)|round|int }}% - check against the document</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% if can_fix and c.checks|selectattr('id','equalto','confidence')|selectattr('status','equalto','warn')|list %}
+        <div style="margin-top:10px"><button class="btn primary">Save verified values</button> <span class="small muted">Corrections are logged with old and new values.</span></div>
+      {% endif %}
+      </form>
+      <div class="small muted" style="margin-top:10px">Vendor: <b>{{ c.vendor_account or 'not matched' }}</b> (matched by {{ c.vendor_match.method }}) {% if vendor %}&middot; terms {{ vendor.payment_terms_days }} days &middot; tax group {{ vendor.tax_group }}{% endif %}</div>
+    </div>
+
+    {# ---------- lines & match ---------- #}
+    <div class="card">
+      <h2>Lines{% if c.invoice_type == 'po' %} &amp; purchase order match{% endif %}</h2>
+      <table>
+        <tr><th>#</th><th>Item</th><th>Description</th><th class="r">Qty</th><th class="r">Unit price</th><th class="r">Amount</th>{% if c.invoice_type == 'po' %}<th>PO line</th><th>Match</th>{% endif %}</tr>
+        {% for l in lines %}{% set m = match_by_line.get(loop.index0) %}
+        <tr>
+          <td>{{ loop.index }}</td><td>{{ l.item_code or '-' }}</td>
+          <td>{{ l.description }}{% if l.is_charge %} <span class="chip">charge</span>{% endif %}</td>
+          <td class="r">{{ '%g'|format(l.quantity) if l.quantity is not none }}</td><td class="r">{{ l.unit_price|money }}</td><td class="r">{{ l.amount|money }}</td>
+          {% if c.invoice_type == 'po' %}
+            {% if m %}<td>{{ (c.header.po_number ~ '-' ~ m.po_line) if m.po_line else '-' }}</td>
+              <td class="small"><span class="dot {{ 'pass' if m.status == 'matched' else 'warn' }}"></span>{{ m.status|capitalize }}{% if m.status != 'matched' %}<div class="muted">{{ m.detail }}</div>{% endif %}</td>
+            {% else %}{% set a = c.allocations|selectattr('charge_line','equalto',loop.index0)|first %}
+              <td>{{ a.code if a }}</td><td class="small"><span class="dot info"></span>{{ (a.treatment ~ ': ' ~ a.method) if a }}</td>{% endif %}
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    {# ---------- accounting ---------- #}
+    <div class="card">
+      <h2>Proposed accounting <span class="small muted" style="font-weight:400">- what will actually post</span></h2>
+      <table>
+        <tr><th>Line</th><th>Account</th><th>Cost center</th><th>Dept</th><th>Project</th><th class="r">Amount</th><th>Why</th></tr>
+        {% for a in c.accounting.lines %}
+        <tr>
+          <td>{{ a.invoice_line + 1 }}</td>
+          <td>{% if a.main_account %}<b>{{ a.main_account }}</b><div class="small muted">{{ accounts.get(a.main_account, 'unknown account') }}</div>{% else %}<span style="color:var(--bad)">Missing</span>{% endif %}
+              {% if a.account_type == 'Project' %}<div class="small muted">Project &middot; {{ a.project_category }}</div>{% endif %}</td>
+          <td>{{ a.CostCenter or '-' }}</td><td>{{ a.Department or '-' }}</td><td>{{ a.Project or '-' }}</td>
+          <td class="r">{{ a.amount|money }}</td>
+          <td class="small muted">{{ a.source }}
+            {% if can_code %}
+            <details><summary class="small" style="cursor:pointer;color:var(--brand)">Change coding</summary>
+              <form method="post" action="{{ url_for('coding', cid=c.id, line=a.invoice_line) }}" style="display:grid;gap:6px;margin-top:6px">
+                <select name="main_account">{% for k, v in accounts.items() %}<option value="{{ k }}" {{ 'selected' if k == a.main_account }}>{{ k }} {{ v }}</option>{% endfor %}</select>
+                <select name="CostCenter"><option value="">(no cost center)</option>{% for k, v in dims.CostCenter.items() %}<option value="{{ k }}" {{ 'selected' if k == a.CostCenter }}>{{ k }} {{ v.name }}{{ ' (closed)' if not v.get('active', true) }}</option>{% endfor %}</select>
+                <select name="Department"><option value="">(no department)</option>{% for k, v in dims.Department.items() %}<option value="{{ k }}" {{ 'selected' if k == a.Department }}>{{ k }} {{ v.name }}</option>{% endfor %}</select>
+                <select name="Project"><option value="">(no project)</option>{% for k, v in projects.items() %}<option value="{{ k }}" {{ 'selected' if k == a.Project }}>{{ k }} {{ v.name }} ({{ v.status }})</option>{% endfor %}</select>
+                <button class="btn">Save coding</button>
+              </form></details>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if c.accounting.invoice_tax %}<tr><td>Tax</td><td><b>222100</b><div class="small muted">{{ accounts['222100'] }}</div></td><td colspan="3" class="small muted">{{ c.accounting.tax_group }} {{ c.accounting.tax_rate_pct }}%</td><td class="r">{{ c.accounting.invoice_tax|money }}</td><td></td></tr>{% endif %}
+        <tr><td>AP</td><td><b>211100</b><div class="small muted">{{ accounts['211100'] }}</div></td><td colspan="3" class="small muted">Vendor balance (credit)</td><td class="r">({{ c.accounting.credit_total|money }})</td>
+          <td class="small"><span class="dot {{ 'pass' if c.accounting.balanced else 'fail' }}"></span>{{ 'Balanced' if c.accounting.balanced else 'Not balanced' }}</td></tr>
+      </table>
+    </div>
+
+    {# ---------- checks ---------- #}
+    <div class="card">
+      <h2>Validation checks</h2>
+      <table>{% for ch in c.checks %}
+        <tr><td style="width:38%"><span class="dot {{ ch.status }}"></span>{{ ch.label }}{% if ch.blocking and ch.status == 'fail' %} <span class="chip bad">blocking</span>{% endif %}</td><td class="small muted">{{ ch.detail }}</td></tr>
+      {% endfor %}</table>
+    </div>
+
+    {# ---------- approvals ---------- #}
+    <div class="card">
+      <h2>Approval route <span class="small muted" style="font-weight:400">- from <a href="{{ url_for('policy') }}">policy rules</a></span></h2>
+      {% if c.touchless %}<p class="small">No approval needed: every check passed and the invoice is within the touchless limit for its type.</p>{% endif %}
+      <table>{% for s in c.steps %}
+        <tr><td style="width:24%"><span class="dot {{ s.status }}"></span><b>{{ user_name(s.assignee) }}</b><div class="small muted">{{ s.kind }} &middot; {{ s.rule }}</div></td>
+            <td class="small">{{ s.description }}<div class="muted">{{ s.why }}</div></td>
+            <td class="small">{{ s.status|capitalize }}{% if s.decided_at %}<div class="muted">{{ s.decided_at[:16]|replace('T',' ') }}{% if s.comment %} &middot; "{{ s.comment }}"{% endif %}</div>{% endif %}</td></tr>
+      {% endfor %}</table>
+      {% for n in c.routing_notes or [] %}<div class="small" style="margin-top:6px"><span class="dot info"></span>{{ n }}</div>{% endfor %}
+    </div>
+
+    {# ---------- audit ---------- #}
+    <div class="card">
+      <h2>Audit trail</h2>
+      <table>{% for r in audit %}
+        <tr><td class="small muted" style="width:20%">{{ r.ts[:19]|replace('T',' ') }}</td><td class="small" style="width:20%"><b>{{ r.actor }}</b> <span class="muted">({{ r.actor_type }})</span></td><td class="small"><b>{{ r.action }}</b> {{ r.detail }}</td></tr>
+      {% endfor %}</table>
+    </div>
+  </div>
+</div>
+{% endblock %}
